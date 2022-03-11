@@ -1,0 +1,16 @@
+pydantic[orjson]
+ormar
+fastapi
+loguru
+deepmerge
+# Dev
+build 
+twine
+wheel
+black
+darglint
+pytest
+pytest-cov
+bandit
+mypy
+pydocstyle
