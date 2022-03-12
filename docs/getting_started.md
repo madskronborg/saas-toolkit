@@ -3,7 +3,7 @@
 To get started with Saas Toolkit, you will first need to install the library:
 
 In a shell run: <br>
-`pip install git+https://github.com/madskronborg/saas-toolkit`
+`pip install saas-toolkit`
 
 ## Configuration
 
