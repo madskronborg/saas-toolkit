@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-import pytest
 from saas_toolkit.config import Settings, configure, SETTINGS
 
 
