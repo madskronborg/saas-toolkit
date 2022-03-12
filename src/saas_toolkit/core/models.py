@@ -5,6 +5,11 @@ import ormar
 from saas_toolkit.config import SETTINGS
 
 
+class BaseMeta(ormar.ModelMeta):
+    metadata = SETTINGS.sql.metadata
+    database = SETTINGS.sql.database
+
+
 class BaseModel(ormar.Model):
     class Meta(SETTINGS.models.metadata):
         abstract = True

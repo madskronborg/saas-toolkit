@@ -1,8 +1,8 @@
 import datetime
-from pydantic import BaseModel
+from pydantic import UUID4, BaseModel
+
 
 class Schema(BaseModel):
-
     def __new__(cls, *args, **kwargs):
 
         klass = super().__new__(cls)
@@ -14,6 +14,15 @@ class Schema(BaseModel):
 
         return klass
 
+
 class TimestampedSchema(Schema):
     created: datetime.datetime
     updated: datetime.datetime
+
+
+class SchemaOut(TimestampedSchema):
+    id: UUID4
+
+
+class SchemaIn(Schema):
+    pass

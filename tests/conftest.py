@@ -3,8 +3,8 @@ import pytest
 from httpx import AsyncClient
 import sqlalchemy
 from fastapi import FastAPI
-from src.saas_toolkit import configure, SETTINGS
-from src.saas_toolkit.config import Settings
+from saas_toolkit import configure, SETTINGS
+from saas_toolkit.config import Settings
 from . import types
 
 # Configuration

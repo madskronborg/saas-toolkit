@@ -1,4 +1,5 @@
 from typing import Optional, Type
+from databases import Database
 from pydantic import BaseModel
 from sqlalchemy import MetaData
 from .logging import logger
@@ -6,18 +7,24 @@ from deepmerge import always_merger
 from saas_toolkit import errors
 
 
-class DatabaseSettings(BaseModel):
+class BaseSettings(BaseModel):
+    class Meta:
+        arbitrary_types_allowed = True
+
+
+class SQLSettings(BaseSettings):
     metadata: Optional[MetaData] = None
+    database: Optional[Database] = None
 
 
-class LoggingSettings(BaseModel):
+class LoggingSettings(BaseSettings):
 
     enable: bool = True
 
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
 
-    database: DatabaseSettings = DatabaseSettings()
+    sql: SQLSettings = SQLSettings()
     logging: LoggingSettings = LoggingSettings()
 
 

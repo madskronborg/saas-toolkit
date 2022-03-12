@@ -91,7 +91,7 @@ def setup(
             postgres_url: Optional[PostgresDsn] = user_settings.POSTGRES_URI
 
             if postgres_url:
-                metadata = SETTINGS.database.metadata or MetaData()
+                metadata = SETTINGS.sql.metadata or MetaData()
                 db = databases.Database(postgres_url)
 
                 configure({"database": {"metadata": metadata}}, partial=True)

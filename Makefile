@@ -9,6 +9,6 @@ build-docs:
 	mkdocs build
 
 test:
-	@echo eval"python --version"
+	pip install -e .
 	coverage run --rcfile ./pyproject.toml -m pytest ./tests
 	coverage report --fail-under 95
