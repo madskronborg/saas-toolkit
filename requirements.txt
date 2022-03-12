@@ -1,8 +1,10 @@
 pydantic[orjson]
-ormar
+ormar[postgresql,sqlite,orjson,crypto,mysql]
+sqlalchemy
 fastapi
 loguru
 deepmerge
+httpx[http2]
 # Dev
 build 
 twine
