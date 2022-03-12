@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from databases import Database
 from saas_toolkit import errors
 from sqlalchemy import MetaData
-from saas_toolkit.config import configure, settings
+from saas_toolkit.config import configure, SETTINGS
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -71,28 +71,30 @@ async def exception_handler(request: Request, exc: errors.Error) -> JSONResponse
 
 
 def setup(
-    app: FastAPI, settings: Optional[BaseSettings] = None, db: Optional[Database] = None
+    app: FastAPI,
+    user_settings: Optional[BaseSettings] = None,
+    db: Optional[Database] = None,
 ) -> None:
 
     # General
-    if settings and isinstance(settings, AppSettings):
+    if user_settings and isinstance(user_settings, AppSettings):
 
         if not app.title:
-            app.title = settings.PROJECT_NAME
+            app.title = user_settings.PROJECT_NAME
 
     # Exception handling
     app.add_exception_handler(errors.Error, exception_handler)
 
     # Database
-    if settings:
-        if not db and isinstance(settings, PostgresSettings):
-            postgres_url: Optional[PostgresDsn] = settings.POSTGRES_URI
+    if user_settings:
+        if not db and isinstance(user_settings, PostgresSettings):
+            postgres_url: Optional[PostgresDsn] = user_settings.POSTGRES_URI
 
             if postgres_url:
-                metadata = MetaData()
+                metadata = SETTINGS.database.metadata or MetaData()
                 db = databases.Database(postgres_url)
 
-                configure({"database": {"metadata": metadata}})
+                configure({"database": {"metadata": metadata}}, partial=True)
 
     if db:
         init_db(app, db)
@@ -109,13 +111,15 @@ def setup(
         app.add_event_handler("shutdown", on_shutdown)
 
     # Middleware
-    if settings:
+    if user_settings:
 
-        if isinstance(settings, CorsSettings):
+        if isinstance(user_settings, CorsSettings):
 
             app.add_middleware(
                 CORSMiddleware,
-                allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+                allow_origins=[
+                    str(origin) for origin in user_settings.BACKEND_CORS_ORIGINS
+                ],
                 allow_credentials=True,
                 allow_methods=["*"],
                 allow_headers=["*"],

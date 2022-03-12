@@ -1,17 +1,15 @@
-# Welcome to MkDocs
+# Introduction
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+Saas Toolkit is a collection of reusable logic patterns and utilities for Python projects.
 
-## Commands
+It is highly opionated and is focused around the following libraries and frameworks:
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+- FastAPI
+- Ormar (ORM)
+- Pydantic
 
-## Project layout
+It simplifies integration of the libraries into fastapi and makes a ton of building blocks available for creating advanced patterns and makes it easy to keep a high code standard.
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Getting Started
+
+Continue by setting up the project [here.](getting_started.md)

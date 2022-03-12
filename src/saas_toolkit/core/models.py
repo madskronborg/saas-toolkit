@@ -2,11 +2,11 @@ import datetime
 import uuid
 import ormar
 
-from saas_toolkit.config import settings
+from saas_toolkit.config import SETTINGS
 
 
 class BaseModel(ormar.Model):
-    class Meta(settings.models.metadata):
+    class Meta(SETTINGS.models.metadata):
         abstract = True
 
     id: uuid.UUID = ormar.UUID(

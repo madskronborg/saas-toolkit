@@ -7,7 +7,7 @@ from saas_toolkit import errors
 
 
 class DatabaseSettings(BaseModel):
-    metadata: Type[MetaData]
+    metadata: Optional[MetaData] = None
 
 
 class LoggingSettings(BaseModel):
@@ -17,22 +17,22 @@ class LoggingSettings(BaseModel):
 
 class Settings(BaseModel):
 
-    database: DatabaseSettings
+    database: DatabaseSettings = DatabaseSettings()
     logging: LoggingSettings = LoggingSettings()
 
 
-settings: Optional[Settings] = None
+SETTINGS: Optional[Settings] = None
 
 
 def configure(user_settings: Settings | dict, partial: bool = False) -> None:
-    global settings
+    global SETTINGS
 
     if not partial:
 
         if isinstance(user_settings, dict):
-            settings = Settings(**user_settings)
+            SETTINGS = Settings(**user_settings)
         else:
-            settings = user_settings
+            SETTINGS = user_settings
 
     if partial:
 
@@ -41,13 +41,13 @@ def configure(user_settings: Settings | dict, partial: bool = False) -> None:
                 "When using configure() with partial=True the provided object must be a dict"
             )
 
-        if settings:
-            settings = Settings(**always_merger(settings.dict(), user_settings))
+        if SETTINGS:
+            SETTINGS = Settings(**always_merger(SETTINGS.dict(), user_settings))
         else:
-            settings = Settings(**user_settings)
+            SETTINGS = Settings(**user_settings)
 
     # Logging
-    if settings.logging.enable:
+    if SETTINGS.logging.enable:
         logger.enable("saas_toolkit")
     else:
         logger.disable("saas_toolkit")

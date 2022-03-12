@@ -1,2 +1,2 @@
-from .config import settings, configure
+from .config import SETTINGS, configure
 from .logging import logger
