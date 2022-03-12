@@ -14,3 +14,7 @@ pytest-cov
 bandit
 mypy
 pydocstyle
+
+# Docs
+mkdocs-material
+mkdocstrings

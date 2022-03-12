@@ -13,7 +13,7 @@ You can enable / disable logging, add a custom `SQLAlchemy` `MetaData` class and
 **Important** <br>
 The configuration has to be made before any other part of the library is imported.
 
-```python
+```py
 # In main.py
 from saas_toolkit import configure, Settings
 
@@ -36,13 +36,15 @@ After we have configured the library, we can import anything we need.
 The next step is to decide how we want to configure our FastAPI app. <br>
 Typically, we will use Pydantic's `BaseSettings` class, so we can change configuration settings via Environment Variables.
 
-You have several `Settings` options at your disposal:
+You have several settings options at your disposal:
 
-- `AppSettings` - The base settings class. Subclass Pydantic's `BaseSettings` class and adds a few generic attributes like `PROJECT_NAME`, `ENV` and `SECRET`.
+- `AppSettings` (_required_) - The base settings class. Subclass Pydantic's `BaseSettings` class and adds a few generic attributes like `PROJECT_NAME`, `ENV` and `SECRET`.
 - `CorsSettings` - A mixin to configure CORS. Will automatically enable `FastAPI`'s `CorsMiddleware`.
 - `PostgresSettings` - A mixin to configure postgres. If a database is not provided to the `setup` function, a database will automatically be made. If `metadata` is not provided when configuring Saas Toolkit, a `MetaData` instance will be created automatically.
 
-```python
+Each of these settings can be combined at will. The only required
+
+```py
 # in config.py
 from saas_toolkit.fastapi.config import AppSettings, CorsSettings, PostgresSettings
 
@@ -53,11 +55,15 @@ settings = Settings()
 
 ```
 
+You can now configure your project using environment variables or `.env` file.
+
+Full list of environment variables can be found [here.](fastapi/configuration.md)
+
 ---
 
 The next step is to setup the FastAPI `app` instance, so it works with all the goodies from Saas Toolkit such as automatic error responses + starting and stopping of database etc.
 
-```python
+```py
 # In main.py
 # ... code from above
 

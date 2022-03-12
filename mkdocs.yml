@@ -1,7 +1,9 @@
 site_name: Saas Toolkit
 theme:
   name: material
-  
+plugins:
+    - search
+    - mkdocstrings
 markdown_extensions:
 
   # Python Markdown
