@@ -1,6 +1,6 @@
 # Introduction
 
-Saas Toolkit is a collection of reusable logic patterns and utilities for Python projects.
+SaaS Toolkit is a collection of reusable logic patterns and utilities for Python projects.
 
 It is highly opionated and is focused around the following libraries and frameworks:
 

@@ -1,13 +1,13 @@
 # Getting Started
 
-To get started with Saas Toolkit, you will first need to install the library:
+To get started with SaaS Toolkit, you will first need to install the library:
 
 In a shell run: <br>
 `pip install saas-toolkit`
 
 ## Configuration
 
-In your `main.py` file (where your FastAPI app is), you will need to configure Saas Toolkit. <br>
+In your `main.py` file (where your FastAPI app is), you will need to configure SaaS Toolkit. <br>
 You can enable / disable logging, add a custom `SQLAlchemy` `MetaData` class and much more.
 
 **Important** <br>
@@ -40,7 +40,7 @@ You have several settings options at your disposal:
 
 - `AppSettings` (_required_) - The base settings class. Subclass Pydantic's `BaseSettings` class and adds a few generic attributes like `PROJECT_NAME`, `ENV` and `SECRET`.
 - `CorsSettings` - A mixin to configure CORS. Will automatically enable `FastAPI`'s `CorsMiddleware`.
-- `PostgresSettings` - A mixin to configure postgres. If a database is not provided to the `setup` function, a database will automatically be made. If `metadata` is not provided when configuring Saas Toolkit, a `MetaData` instance will be created automatically.
+- `PostgresSettings` - A mixin to configure postgres. If a database is not provided to the `setup` function, a database will automatically be made. If `metadata` is not provided when configuring SaaS Toolkit, a `MetaData` instance will be created automatically.
 
 Each of these settings can be combined at will. The only required
 
@@ -61,7 +61,7 @@ Full list of environment variables can be found [here.](fastapi/configuration.md
 
 ---
 
-The next step is to setup the FastAPI `app` instance, so it works with all the goodies from Saas Toolkit such as automatic error responses + starting and stopping of database etc.
+The next step is to setup the FastAPI `app` instance, so it works with all the goodies from SaaS Toolkit such as automatic error responses + starting and stopping of database etc.
 
 ```py
 # In main.py
@@ -72,7 +72,7 @@ from .config import settings # Import the settings variable we created before
 from sass_toolkit.fastapi import import setup
 app = FastAPI()
 
-setup(app, settings) # Notice we don't pass the `db` kwarg, since we wan't Saas Toolkit to auto create our database.
+setup(app, settings) # Notice we don't pass the `db` kwarg, since we wan't SaaS Toolkit to auto create our database.
 ```
 
 Voilà! Our FastAPI app now have:
