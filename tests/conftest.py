@@ -5,13 +5,12 @@ import sqlalchemy
 from fastapi import FastAPI
 from saas_toolkit import configure, SETTINGS
 from saas_toolkit.config import Settings
-from . import types
 
 # Configuration
-@pytest.fixture(scope="module")
-def configuration() -> types.CONFIG:
+@pytest.fixture(scope="module", autouse=True)
+def configuration():
 
-    yield (configure, SETTINGS)
+    yield
 
     # Reset configuration
     configure(Settings())

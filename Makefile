@@ -8,7 +8,9 @@ serve-docs:
 build-docs:
 	mkdocs build
 
-test:
+local-install:
 	pip install -e .
+
+test:
 	coverage run --rcfile ./pyproject.toml -m pytest ./tests
 	coverage report --fail-under 95

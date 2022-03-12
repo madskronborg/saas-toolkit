@@ -8,8 +8,9 @@ from saas_toolkit import errors
 
 
 class BaseSettings(BaseModel):
-    class Meta:
+    class Config:
         arbitrary_types_allowed = True
+        validate_assignment = True
 
 
 class SQLSettings(BaseSettings):
@@ -19,7 +20,7 @@ class SQLSettings(BaseSettings):
 
 class LoggingSettings(BaseSettings):
 
-    enable: bool = True
+    enable: bool = False
 
 
 class Settings(BaseSettings):
@@ -28,30 +29,34 @@ class Settings(BaseSettings):
     logging: LoggingSettings = LoggingSettings()
 
 
-SETTINGS: Optional[Settings] = None
+SETTINGS: Settings = Settings()
 
 
 def configure(user_settings: Settings | dict, partial: bool = False) -> None:
-    global SETTINGS
+    new_settings: Optional[dict] = None
+
+    print("User Settings are:", user_settings, "Partial:", partial)
 
     if not partial:
 
         if isinstance(user_settings, dict):
-            SETTINGS = Settings(**user_settings)
+            new_settings = user_settings
         else:
-            SETTINGS = user_settings
+            new_settings = user_settings.dict()
 
     if partial:
 
-        if not isinstance(user_settings, dict):
-            raise errors.ConfigurationError(
-                "When using configure() with partial=True the provided object must be a dict"
-            )
-
-        if SETTINGS:
-            SETTINGS = Settings(**always_merger(SETTINGS.dict(), user_settings))
+        if isinstance(user_settings, dict):
+            new_settings = always_merger.merge(SETTINGS.dict(), user_settings)
         else:
-            SETTINGS = Settings(**user_settings)
+            new_settings = always_merger.merge(SETTINGS.dict(), user_settings.dict())
+
+    if new_settings == None:
+        raise ValueError("new_settings are not set!")
+
+    for key, value in new_settings.items():
+
+        setattr(SETTINGS, key, value)
 
     # Logging
     if SETTINGS.logging.enable:
