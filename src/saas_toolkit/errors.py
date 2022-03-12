@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class Error(Exception):
 
     message: str | int | dict | list
-    code: Optional[int] = None
+    code: Optional[int]
     status_code: int
 
     def __init__(

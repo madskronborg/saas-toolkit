@@ -1,3 +1,4 @@
+import sys
 import databases
 import pytest
 from httpx import AsyncClient
@@ -6,14 +7,21 @@ from fastapi import FastAPI
 from saas_toolkit import configure, SETTINGS
 from saas_toolkit.config import Settings
 
+
+test_settings = Settings()
+
+configure(test_settings)
+
 # Configuration
 @pytest.fixture(scope="module", autouse=True)
 def configuration():
 
+    configure(Settings())
+
     yield
 
     # Reset configuration
-    configure(Settings())
+    configure(test_settings)
 
 
 # App
@@ -39,7 +47,7 @@ async def db():
     metadata.create_all(engine)
     yield
     metadata.drop_all(engine)
-    configure(Settings())
+    configure(test_settings)
 
 
 # Client

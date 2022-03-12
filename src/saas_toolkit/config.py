@@ -35,7 +35,7 @@ SETTINGS: Settings = Settings()
 def configure(user_settings: Settings | dict, partial: bool = False) -> None:
     new_settings: Optional[dict] = None
 
-    print("User Settings are:", user_settings, "Partial:", partial)
+    logger.info("User Settings are:", user_settings, "Partial:", partial)
 
     if not partial:
 
