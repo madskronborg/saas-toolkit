@@ -2,11 +2,12 @@ import sys
 import databases
 import pytest
 from httpx import AsyncClient
+from starlette.testclient import TestClient
 import sqlalchemy
 from fastapi import FastAPI
 from saas_toolkit import configure, SETTINGS
 from saas_toolkit.config import Settings
-
+from . import variables
 
 test_settings = Settings()
 
@@ -32,17 +33,17 @@ def app() -> FastAPI:
 
 
 # Database
-DATABASE_URL = "sqlite:///db.sqlite"
-database = databases.Database(DATABASE_URL)
+
+database = databases.Database(variables.DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
 
 @pytest.fixture(scope="module")
-async def db():
+def db():
 
     configure(Settings(sql=dict(metadata=metadata, database=database)))
 
-    engine = sqlalchemy.create_engine(DATABASE_URL)
+    engine = sqlalchemy.create_engine(variables.DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
     yield
@@ -52,6 +53,6 @@ async def db():
 
 # Client
 @pytest.fixture(scope="module")
-async def client():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+def client(app: FastAPI):
+    with TestClient(app) as client:
         yield client

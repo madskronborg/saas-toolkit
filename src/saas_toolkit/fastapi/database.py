@@ -17,6 +17,7 @@ def init_db(app: FastAPI, db: Database) -> None:
 
 async def start_database(app: FastAPI) -> None:
 
+    logger.info("Starting database..")
     database_: Database = app.state.database
     if not database_.is_connected:
         await database_.connect()

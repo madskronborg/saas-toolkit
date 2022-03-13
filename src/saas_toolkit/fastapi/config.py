@@ -1,22 +1,23 @@
 from typing import Any, Optional
 import databases
-from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
+from fastapi import FastAPI
+from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, SecretStr, validator
 from typing import Optional
 from .database import init_db, start_database, stop_database
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from databases import Database
 from saas_toolkit import errors
 from sqlalchemy import MetaData
 from saas_toolkit.config import configure, SETTINGS
 from fastapi.middleware.cors import CORSMiddleware
+from .errors import exception_handler
+from saas_toolkit.core.converters import convert_value_to_list
 
 
 class AppSettings(BaseSettings):
 
     PROJECT_NAME: str
     ENV: str = "development"
-    SECRET: str = "JDEkd3FLMERidi4kelpuQ2tWelFsM3NuVUdiZXFGUjltMQo="
+    SECRET: SecretStr = "JDEkd3FLMERidi4kelpuQ2tWelFsM3NuVUdiZXFGUjltMQo="
 
     class Config:
         case_sensitive = True
@@ -26,14 +27,10 @@ class CorsSettings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
 
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    # Validators
+    _assemble_cors_origins = validator("BACKEND_CORS_ORIGINS", pre=True)(
+        convert_value_to_list
+    )
 
 
 class PostgresSettings(BaseSettings):
@@ -57,30 +54,16 @@ class PostgresSettings(BaseSettings):
         )
 
 
-async def exception_handler(request: Request, exc: errors.Error) -> JSONResponse:
-
-    data = dict(
-        status_code=exc.status_code,
-    )
-
-    content: dict = dict(detail=exc.message, code=exc.code)
-
-    data["content"] = content
-
-    return JSONResponse(**data)
-
-
 def setup(
     app: FastAPI,
-    user_settings: Optional[BaseSettings] = None,
+    user_settings: Optional[AppSettings | CorsSettings | PostgresSettings] = None,
     db: Optional[Database] = None,
 ) -> None:
 
     # General
     if user_settings and isinstance(user_settings, AppSettings):
 
-        if not app.title:
-            app.title = user_settings.PROJECT_NAME
+        app.title = user_settings.PROJECT_NAME
 
     # Exception handling
     app.add_exception_handler(errors.Error, exception_handler)
@@ -94,7 +77,7 @@ def setup(
                 metadata = SETTINGS.sql.metadata or MetaData()
                 db = databases.Database(postgres_url)
 
-                configure({"database": {"metadata": metadata}}, partial=True)
+                configure({"sql": {"metadata": metadata, "database": db}}, partial=True)
 
     if db:
         init_db(app, db)
