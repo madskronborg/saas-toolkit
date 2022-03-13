@@ -1,6 +1,6 @@
 # Configuration
 
-The `saas_toolkit.fastapi.config` module contains a collection of setting classes that can be used to configure the FastAPI app.
+The `saas_toolkit.fastapi.conf` module contains a collection of setting classes that can be used to configure the FastAPI app.
 
 ## App Settings (required)
 

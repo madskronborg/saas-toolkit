@@ -42,11 +42,12 @@ You have several settings options at your disposal:
 - `CorsSettings` - A mixin to configure CORS. Will automatically enable `FastAPI`'s `CorsMiddleware`.
 - `PostgresSettings` - A mixin to configure postgres. If a database is not provided to the `setup` function, a database will automatically be made. If `metadata` is not provided when configuring SaaS Toolkit, a `MetaData` instance will be created automatically.
 
-Each of these settings can be combined at will. The only required
+Each of these settings can be combined at will. <br>
+The only required class is `AppSettings`, which needs to be subclassed.
 
 ```py
 # in config.py
-from saas_toolkit.fastapi.config import AppSettings, CorsSettings, PostgresSettings
+from saas_toolkit.fastapi.conf import AppSettings, CorsSettings, PostgresSettings
 
 class Settings(AppSettings, CorsSettings, PostgresSettings):
     pass
@@ -69,7 +70,7 @@ The next step is to setup the FastAPI `app` instance, so it works with all the g
 
 from fastapi import FastAPI
 from .config import settings # Import the settings variable we created before
-from sass_toolkit.fastapi import import setup
+from sass_toolkit.fastapi.conf import setup
 app = FastAPI()
 
 setup(app, settings) # Notice we don't pass the `db` kwarg, since we wan't SaaS Toolkit to auto create our database.
