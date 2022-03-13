@@ -11,7 +11,7 @@ class BaseMeta(ormar.ModelMeta):
 
 
 class BaseModel(ormar.Model):
-    class Meta(SETTINGS.models.metadata):
+    class Meta(BaseMeta):
         abstract = True
 
     id: uuid.UUID = ormar.UUID(
