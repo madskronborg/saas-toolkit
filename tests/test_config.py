@@ -1,7 +1,7 @@
 import databases
 from fastapi import FastAPI
 import sqlalchemy
-from saas_toolkit.config import Settings, configure, SETTINGS
+from saas_toolkit.conf import Settings, configure, SETTINGS
 from saas_toolkit import logger
 from . import variables
 

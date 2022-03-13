@@ -2,7 +2,7 @@ import datetime
 import uuid
 import ormar
 
-from saas_toolkit.config import SETTINGS
+from saas_toolkit.conf import SETTINGS
 
 
 class BaseMeta(ormar.ModelMeta):

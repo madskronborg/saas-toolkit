@@ -6,7 +6,7 @@ from starlette.testclient import TestClient
 import sqlalchemy
 from fastapi import FastAPI
 from saas_toolkit import configure, SETTINGS
-from saas_toolkit.config import Settings
+from saas_toolkit.conf import Settings
 from . import variables
 
 test_settings = Settings()

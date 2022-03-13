@@ -1,4 +1,4 @@
-from saas_toolkit.config import SETTINGS
+from saas_toolkit.conf import SETTINGS
 from saas_toolkit import errors
 
 from . import errors

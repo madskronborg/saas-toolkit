@@ -2,14 +2,14 @@ import databases
 from fastapi import FastAPI
 from pydantic import PostgresDsn, SecretStr
 import sqlalchemy
-from saas_toolkit.fastapi.config import (
+from saas_toolkit.fastapi.conf import (
     AppSettings,
     CorsSettings,
     PostgresSettings,
     setup as fastapi_setup,
 )
 from saas_toolkit import errors
-from saas_toolkit.config import SETTINGS
+from saas_toolkit.conf import SETTINGS
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
 
