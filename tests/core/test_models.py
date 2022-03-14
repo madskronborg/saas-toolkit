@@ -2,8 +2,6 @@ import datetime
 from uuid import UUID
 from databases import Database
 from fastapi import FastAPI
-from ormar import pre_update
-from saas_toolkit.fastapi.database import start_database
 
 from saas_toolkit.core import models
 
