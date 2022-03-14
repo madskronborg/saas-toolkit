@@ -13,6 +13,7 @@ black
 darglint
 pytest
 pytest-cov
+pytest-asyncio
 bandit
 mypy
 pydocstyle

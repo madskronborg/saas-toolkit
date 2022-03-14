@@ -46,7 +46,7 @@ def db():
     engine = sqlalchemy.create_engine(variables.DATABASE_URL)
     metadata.drop_all(engine)
     metadata.create_all(engine)
-    yield
+    yield database
     metadata.drop_all(engine)
     configure(test_settings)
 
