@@ -8,6 +8,8 @@ from . import variables
 
 def test_configuration():
 
+    configure(Settings())
+
     assert SETTINGS == Settings(), "Settings does not have a default value"
 
     configure({})

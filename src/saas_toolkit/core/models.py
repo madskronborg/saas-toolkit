@@ -11,7 +11,7 @@ class BaseMeta(ormar.ModelMeta):
 
 
 class BaseModel(ormar.Model):
-    class Meta(BaseMeta):
+    class Meta:
         abstract = True
 
     id: uuid.UUID = ormar.UUID(
@@ -24,7 +24,7 @@ class BaseModel(ormar.Model):
 
     # created = fields.DatetimeField(auto_now_add=True)
     # updated = fields.DatetimeField(auto_now=True)
-    created: datetime.datetime = ormar.DateTime(timezone=True)
+    created: datetime.datetime = ormar.DateTime(timezone=True, nullable=True)
     updated: datetime.datetime = ormar.DateTime(timezone=True, nullable=True)
 
     def __str__(self) -> str:
@@ -33,8 +33,12 @@ class BaseModel(ormar.Model):
 
     async def save(self):
 
+        now = datetime.datetime.now()
+
         if not self.created:
-            self.created = datetime.datetime.now()
+            self.created = now
+
+        self.updated = now
 
         return await super().save()
 
