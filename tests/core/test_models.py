@@ -3,8 +3,10 @@ from uuid import UUID
 from databases import Database
 from fastapi import FastAPI
 import ormar
+import pytest
 
 from saas_toolkit.core import models
+from saas_toolkit import errors
 
 
 class MyModel(models.BaseModel):
@@ -12,9 +14,19 @@ class MyModel(models.BaseModel):
         pass
 
 
-class MyOrderableModel(models.BaseModel, models.OrderableModel):
-    class Meta(models.OrderableModel.MetaOptions):
+class MyOrderableModel(models.BaseModel, models.OrderableMixin):
+    class Meta(models.BaseMeta, models.OrderableMixin.MetaOptions):
         pass
+
+
+# Queryset
+
+
+async def test_base_queryset(db: FastAPI):
+
+    with pytest.raises(errors.NotFound):
+
+        await MyModel.objects.get_or_404(id="bla")
 
 
 # Base Model

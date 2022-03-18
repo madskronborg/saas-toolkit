@@ -24,7 +24,7 @@ from saas_toolkit.core import models
 
 class MyModel(models.BaseModel):
 
-    class Meta(ormar.ModelMeta):
+    class Meta(models.BaseMeta):
         pass
 
 ```
@@ -50,6 +50,6 @@ from saas_toolkit.core import models
 
 class MyOrderableModel(models.BaseModel, models.OrderableMixin):
 
-    class Meta(models.OrderableMixin.MetaOptions):
+    class Meta(models.BaseMeta, models.OrderableMixin.MetaOptions):
         pass
 ```

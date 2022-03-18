@@ -1,20 +1,42 @@
 import datetime
+from typing import TYPE_CHECKING
 import uuid
 import ormar
+from ormar.models import T
+
+from saas_toolkit import errors
 
 from saas_toolkit.conf import SETTINGS
+
+# Queryset
+
+
+class BaseQueryset(ormar.QuerySet[T]):
+    async def get_or_404(self, *args, **kwargs) -> T:
+
+        entity = await self.get_or_none(*args, **kwargs)
+
+        if entity is None:
+            raise errors.NotFound(f"{self.model.__class__.__name__} not found")
+
+        return entity
+
+
+# Models
 
 
 class BaseMeta(ormar.ModelMeta):
     metadata = SETTINGS.sql.metadata
     database = SETTINGS.sql.database
+    queryset_class = BaseQueryset
 
 
 class BaseModel(ormar.Model):
     class Meta:
         abstract = True
-        metadata = SETTINGS.sql.metadata
-        database = SETTINGS.sql.database
+
+    if TYPE_CHECKING:
+        objects: BaseQueryset["BaseModel"]
 
     id: uuid.UUID = ormar.UUID(
         uuid_format="string",
