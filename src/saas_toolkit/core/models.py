@@ -13,6 +13,8 @@ class BaseMeta(ormar.ModelMeta):
 class BaseModel(ormar.Model):
     class Meta:
         abstract = True
+        metadata = SETTINGS.sql.metadata
+        database = SETTINGS.sql.database
 
     id: uuid.UUID = ormar.UUID(
         uuid_format="string",
@@ -22,8 +24,6 @@ class BaseModel(ormar.Model):
         unique=True,
     )
 
-    # created = fields.DatetimeField(auto_now_add=True)
-    # updated = fields.DatetimeField(auto_now=True)
     created: datetime.datetime = ormar.DateTime(timezone=True, nullable=True)
     updated: datetime.datetime = ormar.DateTime(timezone=True, nullable=True)
 
@@ -47,3 +47,11 @@ class BaseModel(ormar.Model):
         self.updated = datetime.datetime.now()
 
         return await super().update(**kwargs)
+
+
+class OrderableMixin:
+    class MetaOptions:
+
+        orders_by = ["order"]
+
+    order: int = ormar.SmallInteger(default=1)

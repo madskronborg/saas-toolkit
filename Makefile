@@ -12,5 +12,5 @@ local-install:
 	pip install -e .
 
 test:
-	coverage run --rcfile ./pyproject.toml -m pytest ./tests
+	coverage run --rcfile ./pyproject.toml -m pytest ./tests -vv
 	coverage report --fail-under 95
