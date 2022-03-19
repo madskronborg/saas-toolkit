@@ -13,9 +13,6 @@ It implements the minimum required fields for a consistent data model.
 - created (datetime) -> A `datetime` for when the instance was created
 - updated (datetime) -> A `datetime` for when the instance was updated
 
-**Meta** <br>
-Implements `metadata` and `database` in `Meta`, so you don't have to include it manually.
-
 **Example**
 
 ```py

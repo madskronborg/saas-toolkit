@@ -22,11 +22,17 @@ class MyOrderableModel(models.BaseModel, models.OrderableMixin):
 # Queryset
 
 
-async def test_base_queryset(db: FastAPI):
+async def test_base_queryset(db: Database):
 
     with pytest.raises(errors.NotFound):
 
         await MyModel.objects.get_or_404(id="bla")
+
+    instance = await MyModel.objects.create()
+
+    assert (
+        await MyModel.objects.get(id=instance.id) == instance
+    ), "get_or_404 could not find item"
 
 
 # Base Model
