@@ -1,61 +1,76 @@
 import inspect
-from typing import Optional, TypeVar
+from typing import Generic, Optional, TypeVar, Union, get_type_hints
 
-from pydantic import AnyHttpUrl, BaseModel
-from . import request, response
 
-from httpx import Client as HTTPXClient
+from httpx import AsyncClient, Client as HTTPXClient
 from httpx import AsyncClient as HTTPXAsyncClient
 
-TRequest = TypeVar("TRequest", bound=request.Request)
-TResponse = TypeVar("TResponse", bound=response.Response)
+TClient = TypeVar("TClient")
+TClientExtension = TypeVar("TClientExtension", bound="BaseClient")
 
 
-class BaseClient:
+class BaseClient(Generic[TClient, TClientExtension]):
 
-    parent: Optional["Client" | "ClientExtension"] = None
-    client: "Client"
+    parent: Optional[TClient | TClientExtension] = None
+    client: Optional[TClient] = None
 
-    def _get_extensions(self) -> list["ClientExtension"]:
+    def __init__(self, *args, **kwargs):
 
-        extensions = inspect.getmembers(
-            self,
-            predicate=lambda o: inspect.isclass(o) and isinstance(o, ClientExtension),
-        )
+        super().__init__(*args, **kwargs)
+
+        self._connect_extensions()
+
+    def _get_extensions(
+        self,
+    ) -> dict[str, Union["ClientExtension", "AsyncClientExtension"]]:
+
+        attrs = get_type_hints(self)
+
+        extensions: dict[str, ClientExtension | AsyncClientExtension] = {}
+
+        for name, value in attrs.items():
+
+            if not inspect.isclass(value):
+                continue
+
+            if issubclass(value, (ClientExtension, AsyncClientExtension)):
+                extensions[name] = value
 
         return extensions
 
-    def bind(self, extension: "ClientExtension") -> None:
+    def _bind(self, extension: TClientExtension) -> None:
 
         extension.parent = self
 
-        if isinstance(self, Client):
-            extension.client = self
+        if isinstance(self, (Client, AsyncClient)):
+            setattr(extension, "client", self)
         else:
-            extension.client = self.client
+            setattr(extension, "client", self.client)
+
+    def _connect_extensions(self) -> None:
+
+        extensions = self._get_extensions()
+
+        for name, extension_cls in extensions.items():
+
+            extension = extension_cls()
+
+            setattr(self, name, extension)
+
+            self._bind(extension)
 
 
-class ClientExtension(BaseClient):
+class ClientExtension(BaseClient["Client", "ClientExtension"]):
     pass
 
 
-class Client(HTTPXClient, BaseClient):
-    def __init__(self, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
-
-        extensions = self._get_extensions()
-
-        for extension in extensions:
-            self.bind(extension)
+class Client(BaseClient["Client", "ClientExtension"], HTTPXClient):
+    pass
 
 
-class AsyncClient(HTTPXAsyncClient, BaseClient):
-    def __init__(self, *args, **kwargs):
+class AsyncClientExtension(BaseClient["AsyncClient", "AsyncClientExtension"]):
+    pass
 
-        super().__init__(*args, **kwargs)
 
-        extensions = self._get_extensions()
-
-        for extension in extensions:
-            self.bind(extension)
+class AsyncClient(BaseClient["AsyncClient", "AsyncClientExtension"], HTTPXAsyncClient):
+    pass
