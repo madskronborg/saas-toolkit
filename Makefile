@@ -13,4 +13,4 @@ local-install:
 
 test:
 	coverage run --rcfile ./pyproject.toml -m pytest ./tests -vv
-	coverage report --fail-under 95
+	coverage report --fail-under 95 -m

@@ -35,7 +35,8 @@ class TodoExtension(sdk.AsyncClientExtension):
     @sdk.action()
     async def get_all(self, params: requests.TodoQuery) -> list[responses.TodoResponse]:
 
-        return self.client.get("todos/", params = query.dict())
+        # Arguments pass to any client HTTP method will auto-unwrap Pydantic models into dictionaries
+        return self.client.get("todos/", params = query)
 
 
 
@@ -72,21 +73,21 @@ class TodoExtension(sdk.AsyncClientExtension):
     @sdk.action()
     async def get_all(self, params: requests.TodoQuery) -> list[responses.TodoResponse]:
 
-        return self.client.get("todos/", params = query.dict())
+        return self.client.get("todos/", params = query)
 
-
-    # TODO: Think in error handling here. Should we add error models? Error handling functions with defaults set in client/parent/extension?
-    # TODO: With error models, return signature could be: TodoResponse | TodoErrorResponse
 
     @sdk_action(responses = {201: TodoResponse})
     async def create(self, data: TodoCreate) -> TodoResponse:
 
-        return self.client.post("todos/", json = data.dict())
+        return self.client.post("todos/", json = data)
 
 
 # We can now create todos
 
 async with TodoClient() as client:
     new_todo: TodoResponse = await client.todos.create(data = {"name": "Todo Name"}) # Data is automatically validated and coverted to TodoCreate model
+
+    # Or get raw response
+    new_todo_response: httpx.Response = await client.todos.create(data = {"name": "Todo Name"}, raw = True)
 
 ```

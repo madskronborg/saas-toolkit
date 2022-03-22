@@ -1,11 +1,11 @@
 from functools import wraps
 import inspect
 
-from typing import Optional, Type, TypeVar, get_origin
+from typing import Optional, Type, TypeVar, cast, get_args, get_origin
 from .request import Request, Params
 from .response import Response
 import httpx
-from pydantic import parse_obj_as, validate_arguments
+from pydantic import ValidationError, parse_obj_as, validate_arguments
 from saas_toolkit import logger
 from . import errors
 
@@ -18,26 +18,12 @@ def get_params(
     sig: inspect.Signature, params: Optional[dict | TParams] = None
 ) -> Optional[TParams]:
 
-    if not params:
-        return None
-
     params_type = sig.parameters["params"].annotation
 
     if isinstance(params, params_type):
         return params
 
-    if isinstance(params, dict):
-
-        if issubclass(params_type, Params):
-            return Params(**params)
-        if isinstance(params, dict):
-            return params
-
-    raise errors.InvalidParams(
-        {
-            "detail": f"Invalid params. Provided {type(params)} when expecting types dict or Params"
-        }
-    )
+    return parse_obj_as(params_type, params)
 
 
 def get_request_data(
@@ -53,40 +39,21 @@ def get_request_data(
     if isinstance(data, data_type):
         return data
 
-    if isinstance(data, dict):
-
-        if issubclass(data_type, Response):
-
-            return data_type(**data)
-
-        return data
-
-    if isinstance(data, list):
-
-        if issubclass(data_type, Response):
-            return parse_obj_as(list[data], data)
-
-        return data
-
-    # Error handling
-    raise errors.InvalidData(
-        {
-            "detail": f"Invalid data. Provided {type(data)} when expecting types dict, list or Request"
-        }
-    )
+    return parse_obj_as(data_type, data)
 
 
 def get_response_data(
     sig: inspect.Signature,
     http_response: httpx.Response,
-    responses: Optional[Type[TResponse] | dict[int, Type[TResponse]]] = None,
+    response: Optional[Type[Response]] = None,
+    responses: Optional[dict[int, Type[TResponse]]] = None,
+    raw: bool = False,
 ) -> dict | list | TResponse:
 
+    if raw:
+        return http_response
+
     response_type = sig.return_annotation
-    response_type_origin = get_origin(response_type) or response_type
-    print(
-        "Response Type:", response_type, "response_type_origin:", response_type_origin
-    )
 
     data: Optional[dict | str] = None
 
@@ -101,42 +68,23 @@ def get_response_data(
     if not (responses or response_type):
         return data
 
+    if response:
+
+        return parse_obj_as(response, data)
+
     if responses:
 
-        if issubclass(responses, Response):
+        status_code = http_response.status_code
 
-            if isinstance(data, dict):
-                return responses(**data)
+        # If status_code is a key in response_model, use key's value as response model
+        if response_model_class := responses.get(status_code, None):
+            return parse_obj_as(response_model_class, data)
 
-            if isinstance(data, list):
-                return parse_obj_as(list[responses], data)
-
-        if issubclass(responses, dict):
-
-            status_code = http_response.status_code
-
-            # If status_code is a key in response_model, use key's value as response model
-            if response_model_class := getattr(responses, status_code, None):
-                if isinstance(data, dict):
-                    return response_model_class(**data)
-
-                if isinstance(data, list):
-                    return parse_obj_as(list[response_model_class], data)
-
-            return data
+        return data
 
     if response_type:
 
-        if issubclass(response_type_origin, Response):
-
-            return response_type(**data)
-
-        if issubclass(response_type_origin, dict):
-
-            return data
-
-        if issubclass(response_type_origin, list):
-            return parse_obj_as(response_type, data)
+        return parse_obj_as(response_type, data)
 
     raise TypeError(
         "responses has to be None, a subclass of Response or a dictionary of HTTP Status Codes and Response subclasses"
@@ -144,21 +92,24 @@ def get_response_data(
 
 
 def action(
-    responses: Optional[Type[TResponse] | dict[int, Type[TResponse]]] = None,
+    response: Optional[Type[Response]] = None,
+    responses: Optional[dict[int, Type[TResponse]]] = None,
     debug: bool = False,
 ):
     def decorator(func):
 
         sig = inspect.signature(func)
 
-        func = validate_arguments(func)
-
         is_debug_mode = debug
+
+        func = validate_arguments(func)
 
         @wraps(func)
         async def wrapper(*args, **kwargs):
 
             debug = kwargs.pop("debug", is_debug_mode)
+            raw = kwargs.pop("raw", False)
+            print("Debug is:", debug, "Raw is:", raw)
 
             ba = sig.bind(*args, **kwargs)
 
@@ -166,24 +117,26 @@ def action(
 
             if data:
                 data = get_request_data(sig, data)
-                sig.parameters["data"] = data
+                ba.arguments["data"] = data
 
             params = ba.arguments.get("params", None)
 
             if params:
                 params = get_params(sig, params)
-                sig.parameters["params"] = params
+                ba.arguments["params"] = params
 
             ba.apply_defaults()
+
+            print("Arguments are:", ba.arguments)
 
             # Validate function arguments before starting request
             func.validate(*ba.args, **ba.kwargs)
 
-            response = None
+            http_response = None
 
             try:
-                response: httpx.Response = await func(*ba.args, **ba.kwargs)
-                response.raise_for_status()
+                http_response: httpx.Response = await func(*ba.args, **ba.kwargs)
+                http_response.raise_for_status()
 
             except httpx.HTTPStatusError as exc:
 
@@ -202,9 +155,33 @@ def action(
 
                 raise
 
-            response = get_response_data(sig, response, responses)
+            http_response = get_response_data(
+                sig, http_response, response, responses, raw=raw
+            )
 
-            return response
+            return http_response
+
+        # TODO: Update function signature to show debug: bool = False _and_ raw: bool = False in intellisense / python
+        """ parameters = (
+            *sig.parameters.values(),
+            inspect.Parameter(
+                "debug",
+                kind=inspect.Parameter.KEYWORD_ONLY,
+                default=False,
+                annotation=bool,
+            ),
+            inspect.Parameter(
+                "raw",
+                kind=inspect.Parameter.KEYWORD_ONLY,
+                default=False,
+                annotation=bool,
+            ),
+        )
+
+        sig = sig.replace(parameters=parameters)
+        func.__signature__ = sig  """
+        func.__annotations__["debug"] = bool
+        func.__annotations__["raw"] = bool
 
         return wrapper
 

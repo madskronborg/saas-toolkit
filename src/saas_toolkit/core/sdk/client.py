@@ -1,9 +1,11 @@
 import inspect
 from typing import Generic, Optional, TypeVar, Union, get_type_hints
+from typing_extensions import Self
 
 
 from httpx import AsyncClient, Client as HTTPXClient
 from httpx import AsyncClient as HTTPXAsyncClient
+from pydantic import BaseModel
 
 TClient = TypeVar("TClient")
 TClientExtension = TypeVar("TClientExtension", bound="BaseClient")
@@ -22,18 +24,18 @@ class BaseClient(Generic[TClient, TClientExtension]):
 
     def _get_extensions(
         self,
-    ) -> dict[str, Union["ClientExtension", "AsyncClientExtension"]]:
+    ) -> dict[str, "AsyncClientExtension"]:
 
         attrs = get_type_hints(self)
 
-        extensions: dict[str, ClientExtension | AsyncClientExtension] = {}
+        extensions: dict[str, AsyncClientExtension] = {}
 
         for name, value in attrs.items():
 
             if not inspect.isclass(value):
                 continue
 
-            if issubclass(value, (ClientExtension, AsyncClientExtension)):
+            if issubclass(value, (AsyncClientExtension)):
                 extensions[name] = value
 
         return extensions
@@ -42,7 +44,7 @@ class BaseClient(Generic[TClient, TClientExtension]):
 
         extension.parent = self
 
-        if isinstance(self, (Client, AsyncClient)):
+        if isinstance(self, (AsyncClient)):
             setattr(extension, "client", self)
         else:
             setattr(extension, "client", self.client)
@@ -60,17 +62,39 @@ class BaseClient(Generic[TClient, TClientExtension]):
             self._bind(extension)
 
 
-class ClientExtension(BaseClient["Client", "ClientExtension"]):
-    pass
-
-
-class Client(BaseClient["Client", "ClientExtension"], HTTPXClient):
-    pass
-
-
 class AsyncClientExtension(BaseClient["AsyncClient", "AsyncClientExtension"]):
     pass
 
 
 class AsyncClient(BaseClient["AsyncClient", "AsyncClientExtension"], HTTPXAsyncClient):
-    pass
+    def __new__(cls: type[Self]) -> Self:
+        klass = super().__new__(cls)
+
+        def decorator(func):
+            async def wrapper(*args, **kwargs):
+
+                sig = inspect.signature(func)
+                ba = sig.bind(*args, **kwargs)
+                ba.apply_defaults()
+
+                for name, value in ba.arguments.items():
+
+                    if isinstance(value, BaseModel):
+                        ba.arguments[name] = value.dict()
+
+                result = await func(*ba.args, **ba.kwargs)
+
+                return result
+
+            return wrapper
+
+        cli_method_names = ["get", "options", "head", "post", "put", "patch", "delete"]
+
+        for method_name in cli_method_names:
+            method = getattr(klass, method_name)
+
+            method = decorator(method)
+
+            setattr(klass, method_name, method)
+
+        return klass
