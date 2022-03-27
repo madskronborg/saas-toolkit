@@ -5,6 +5,7 @@ fastapi
 loguru
 deepmerge
 httpx[http2]
+makefun
 # Dev
 build 
 twine

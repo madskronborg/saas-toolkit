@@ -66,7 +66,7 @@ class TodoExtension(sdk.AsyncClientExtension):
         return response
 
     @sdk.action()
-    async def bad_request(
+    async def bad_get_request(
         self,
     ) -> dict:
 
@@ -81,6 +81,13 @@ class TodoExtension(sdk.AsyncClientExtension):
     ) -> TodoResponse:
 
         response = await self.client.post("todos/", json=data)
+
+        return response
+
+    @sdk.action()
+    async def bad_post_request(self, data: dict) -> dict:
+
+        response = await self.client.post("idonotexist/")
 
         return response
 
@@ -124,7 +131,7 @@ async def test_client_construction():
         assert client.todos.client == client, "Nested extension client not set"
 
 
-async def test_get():
+async def test_get(caplog):
 
     async with TodoClient() as client:
 
@@ -189,13 +196,18 @@ async def test_get():
         with pytest.raises(httpx.HTTPStatusError) as exc:
 
             # Test without debug
-            await client.todos.bad_request()
+            await client.todos.bad_get_request()
 
+        with pytest.raises(httpx.HTTPStatusError) as exc:
             # Test with debug
-            await client.todos.bad_request(debug=True)
+            await client.todos.bad_get_request(debug=True)
+            assert (
+                f"Error response {exc.response.status_code} while requesting {exc.request.url!r}."
+                in caplog.text
+            ), "Log was not added in debug mode"
 
 
-async def test_post():
+async def test_post(caplog):
 
     async with TodoClient() as client:
 
@@ -211,3 +223,13 @@ async def test_post():
         assert todo_with_dict.userId == 1, "Error in created data"
         assert todo_with_dict.title == "Some title", "Error in created data"
         assert todo_with_dict.completed == False, "Error with created data"
+
+        with pytest.raises(httpx.HTTPStatusError) as exc:
+
+            data = {"test": True}
+            # Test with debug
+            await client.todos.bad_post_request(data=data, debug=True)
+            assert (
+                f"Error response {exc.response.status_code} while requesting {exc.request.url!r}. \n\n Body is:\n{data}\n\nHeaders are:\n{exc.request.headers}"
+                in caplog.text
+            ), "Log was not added in debug mode"

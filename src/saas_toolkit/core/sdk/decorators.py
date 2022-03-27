@@ -1,11 +1,11 @@
-from functools import wraps
+from makefun import wraps
 import inspect
 
-from typing import Optional, Type, TypeVar, cast, get_args, get_origin
+from typing import Optional, Type, TypeVar
 from .request import Request, Params
 from .response import Response
 import httpx
-from pydantic import ValidationError, parse_obj_as, validate_arguments
+from pydantic import parse_obj_as, validate_arguments
 from saas_toolkit import logger
 from . import errors
 
@@ -102,9 +102,24 @@ def action(
 
         is_debug_mode = debug
 
-        func = validate_arguments(func)
-
-        @wraps(func)
+        @validate_arguments
+        @wraps(
+            func,
+            append_args=[
+                inspect.Parameter(
+                    "debug",
+                    kind=inspect.Parameter.KEYWORD_ONLY,
+                    default=False,
+                    annotation=bool,
+                ),
+                inspect.Parameter(
+                    "raw",
+                    kind=inspect.Parameter.KEYWORD_ONLY,
+                    default=False,
+                    annotation=bool,
+                ),
+            ],
+        )
         async def wrapper(*args, **kwargs):
 
             debug = kwargs.pop("debug", is_debug_mode)
@@ -130,7 +145,7 @@ def action(
             print("Arguments are:", ba.arguments)
 
             # Validate function arguments before starting request
-            func.validate(*ba.args, **ba.kwargs)
+            wrapper.validate(*ba.args, **ba.kwargs)
 
             http_response = None
 
@@ -160,28 +175,6 @@ def action(
             )
 
             return http_response
-
-        # TODO: Update function signature to show debug: bool = False _and_ raw: bool = False in intellisense / python
-        """ parameters = (
-            *sig.parameters.values(),
-            inspect.Parameter(
-                "debug",
-                kind=inspect.Parameter.KEYWORD_ONLY,
-                default=False,
-                annotation=bool,
-            ),
-            inspect.Parameter(
-                "raw",
-                kind=inspect.Parameter.KEYWORD_ONLY,
-                default=False,
-                annotation=bool,
-            ),
-        )
-
-        sig = sig.replace(parameters=parameters)
-        func.__signature__ = sig  """
-        func.__annotations__["debug"] = bool
-        func.__annotations__["raw"] = bool
 
         return wrapper
 
