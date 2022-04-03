@@ -38,3 +38,8 @@ def test_redis_settings():
         assert value == getattr(
             settings, f"REDIS_{name.upper()}"
         ), "Redis option value is not correct"
+
+    # Test custom kwarg to get_redis_options
+    custom_options = settings.get_redis_options(db=1)
+
+    assert custom_options["db"] == 1, "get_redis_options does not use kwargs"
