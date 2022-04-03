@@ -6,6 +6,12 @@ loguru
 deepmerge
 httpx[http2]
 makefun
+
+# Redis
+redis
+hiredis
+
+
 # Dev
 build 
 twine
