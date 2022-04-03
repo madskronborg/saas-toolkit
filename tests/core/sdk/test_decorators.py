@@ -9,7 +9,7 @@ from saas_toolkit.core import sdk
 
 
 def test_get_params():
-    class TestParams(sdk.Params):
+    class TestParams(sdk.QueryParams):
 
         userId: int
 

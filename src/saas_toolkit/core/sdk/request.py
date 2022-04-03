@@ -6,6 +6,6 @@ class Request(BaseModel):
     pass
 
 
-class Params(BaseModel):
+class QueryParams(BaseModel):
 
     pass

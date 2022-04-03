@@ -22,7 +22,7 @@ class TodoResponse(sdk.Response):
 
 # In requests.py
 
-class TodoQuery(sdk.Query):
+class TodoQuery(sdk.QueryParams):
 
     created: datetime.datetime
 

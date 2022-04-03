@@ -20,7 +20,7 @@ class TodoItemExtension(sdk.AsyncClientExtension):
         return response
 
 
-class TodoParams(sdk.Params):
+class TodoParams(sdk.QueryParams):
 
     userId: Optional[int] = None
 

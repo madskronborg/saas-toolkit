@@ -2,7 +2,7 @@ from makefun import wraps
 import inspect
 
 from typing import Optional, Type, TypeVar
-from .request import Request, Params
+from .request import Request, QueryParams
 from .response import Response
 import httpx
 from pydantic import parse_obj_as, validate_arguments
@@ -11,7 +11,7 @@ from . import errors
 
 TRequest = TypeVar("TRequest", bound=Request)
 TResponse = TypeVar("TResponse", bound=Response)
-TParams = TypeVar("TParams", bound=Params)
+TParams = TypeVar("TParams", bound=QueryParams)
 
 
 def get_params(
