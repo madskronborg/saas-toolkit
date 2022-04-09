@@ -16,6 +16,7 @@ TParams = ParamSpec("TParams")
 TReturnType = TypeVar("TReturnType")
 
 
+# Callables
 @dataclass
 class CallableTypes:
 
@@ -24,7 +25,6 @@ class CallableTypes:
     sig: Signature
 
 
-# Callables
 def make_async(
     func: Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]]
 ) -> Callable[TParams, Coroutine[None, None, TReturnType]]:
