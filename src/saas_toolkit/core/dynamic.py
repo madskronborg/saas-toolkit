@@ -1,4 +1,4 @@
-from inspect import BoundArguments, signature, Signature, Parameter, isawaitable
+from inspect import BoundArguments, signature, Signature, Parameter, iscoroutinefunction
 from typing import Any, Callable, ParamSpec, Type, TypeVar, Literal
 from pydantic import parse_obj_as, validate_arguments
 from makefun import wraps
@@ -45,7 +45,7 @@ def make_async(
     @wraps(func)
     async def wrapper(*args: TParams.args, **kwargs: TParams.kwargs) -> TReturnType:
 
-        if isawaitable(func):
+        if iscoroutinefunction(func):
             return func(*args, **kwargs)
 
         future = pool.submit(func, *args, **kwargs)
