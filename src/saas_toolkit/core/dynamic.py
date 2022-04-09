@@ -14,8 +14,6 @@ TAnnotation = TypeVar("TAnnotation")
 TType = TypeVar("TType", bound=Type)
 TParams = ParamSpec("TParams")
 TReturnType = TypeVar("TReturnType")
-TActionOrignalFunc = Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]]
-TActionWrappedFunc = Callable[TParams, Coroutine[None, None, TReturnType]]
 
 
 @dataclass
@@ -94,7 +92,8 @@ def convert_value_to_type(value: Any, annotation: TAnnotation) -> TAnnotation:
     return parse_obj_as(annotation, value)
 
 
-def action(
+def make_action(
+    func: Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]],
     pre_hooks: list[
         Callable[
             [BoundArguments, CallableTypes],
@@ -107,11 +106,12 @@ def action(
             TReturnType | Coroutine[None, None, TReturnType],
         ]
     ] = [],
-) -> Callable[[TActionOrignalFunc], TActionWrappedFunc]:
+) -> Callable[TParams, Coroutine[None, None, TReturnType]]:
     """
-    action
+    make_action
 
-    Decorates a function as an action.
+    Decorator factory for creating actions.
+
     Actions are characterized by:
 
     - Arguments are type validated
@@ -123,66 +123,76 @@ def action(
 
     `pre_hooks` and `post_hooks` are called in order, therefore, any alterations you make in a previous hook will be present in the following hooks.
 
+    Example:
+        def my_decorator(func: Callable[TParams, TReturnType], TReturnType):
+
+            def log_args(params: BoundArguments, callable_types: CallableTypes) -> BoundArguments:
+
+                print("Params are:", str(params))
+
+                return params
+
+            def inner(*args: TParams.args, **kwargs:TParams.kwargs) -> TReturnType:
+
+                return func(*args, **kwargs)
+
+            async def log_result_to_server(value: TReturnType, callable_types: CallableTypes):
+
+                # Make async request to server ...
+
+                return value
+
+            return make_action(inner, pre_hooks=[log_args], post_hooks=[log_result_to_server])
+
+
     Args:
         pre_hooks (list[ Callable[ [BoundArguments, CallableTypes], BoundArguments  |  Coroutine[None, None, BoundArguments], ] ], optional): A list of functions that can alter arguments and keyword arguments that will be passed to the wrapped function. Defaults to [].
         post_hooks (list[ Callable[ [TReturnType, CallableTypes], TReturnType  |  Coroutine[None, None, TReturnType], ] ], optional): A list of functions that can alter the result of calling the wrapped function. Defaults to [].
 
     Returns:
-        Callable[ [Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]]], Callable[TParams, Coroutine[None, None, TReturnType]], ]: The wrapped function that returns a coroutine
+       Callable[TParams, Coroutine[None, None, TReturnType]]: The wrapped function that returns a coroutine
     """
 
-    def decorator(func: TActionOrignalFunc) -> TActionWrappedFunc:
+    callable_types = get_callable_types(func)
 
-        callable_types = get_callable_types(func)
+    @validate_arguments
+    @wraps(func)
+    async def wrapper(
+        *args: TParams.args, **kwargs: TParams.kwargs
+    ) -> Coroutine[None, None, TReturnType]:
 
-        @validate_arguments
-        @wraps(func)
-        async def wrapper(*args: TParams.args, **kwargs: TParams.kwargs) -> TReturnType:
+        bound_params: BoundArguments = callable_types.sig.bind(*args, **kwargs)
 
-            bound_params: BoundArguments = callable_types.sig.bind(*args, **kwargs)
+        for param_name, param_value in bound_params.arguments.items():
 
-            for param_name, param_value in bound_params.arguments.items():
-
-                bound_params.arguments[param_name] = convert_value_to_type(
-                    param_value, callable_types.parameters[param_name].annotation
-                )
-
-            bound_params.apply_defaults()
-
-            if pre_hooks:
-                for pre_hook in pre_hooks:
-                    bound_params = await make_async(pre_hook)(
-                        bound_params, callable_types
-                    )
-
-            wrapper.validate(*bound_params.args, **bound_params.kwargs)
-
-            result: TReturnType = await make_async(func)(
-                *bound_params.args, **bound_params.kwargs
+            bound_params.arguments[param_name] = convert_value_to_type(
+                param_value, callable_types.parameters[param_name].annotation
             )
 
-            if post_hooks:
+        bound_params.apply_defaults()
 
-                for post_hook in post_hooks:
+        if pre_hooks:
+            for pre_hook in pre_hooks:
+                bound_params = await make_async(pre_hook)(bound_params, callable_types)
 
-                    result = await make_async(post_hook)(result, callable_types)
+        wrapper.validate(*bound_params.args, **bound_params.kwargs)
 
-            return result
+        result: TReturnType = await make_async(func)(
+            *bound_params.args, **bound_params.kwargs
+        )
 
-        wrapper.is_action = True
+        if post_hooks:
 
-        return wrapper
+            for post_hook in post_hooks:
 
-    return decorator
+                result = await make_async(post_hook)(result, callable_types)
 
+        return result
 
-@action
-def test_action(name: str) -> str:
+    wrapper.is_action = True
 
-    return ""
+    return wrapper
 
-
-test_action()
 
 # Objects
 
