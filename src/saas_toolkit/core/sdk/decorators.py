@@ -1,59 +1,75 @@
 from makefun import wraps
 import inspect
 
-from typing import Optional, Type, TypeVar
+from typing import Callable, Optional, Type, TypeVar, TypedDict
 from .request import Request, QueryParams
 from .response import Response
 import httpx
 from pydantic import parse_obj_as, validate_arguments
 from saas_toolkit import logger
+from saas_toolkit.core import dynamic
 from . import errors
+from dataclasses import dataclass
 
 TRequest = TypeVar("TRequest", bound=Request)
 TResponse = TypeVar("TResponse", bound=Response)
 TParams = TypeVar("TParams", bound=QueryParams)
 
 
-def get_params(
-    sig: inspect.Signature, params: Optional[dict | TParams] = None
-) -> Optional[TParams]:
-
-    params_type = sig.parameters["params"].annotation
-
-    if isinstance(params, params_type):
-        return params
-
-    return parse_obj_as(params_type, params)
+@dataclass
+class SDKActionConfig:
+    response: Optional[Type[Response]]
+    responses: Optional[dict[int, Type[TResponse]]]
+    debug: bool
 
 
-def get_request_data(
-    sig: inspect.Signature,
-    data: Optional[dict | list | TRequest] = None,
-) -> Optional[TRequest | list[TRequest]]:
+def handle_response(
+    http_response: httpx.Response,
+    callable_types: dynamic.CallableTypes,
+    config: SDKActionConfig,
+    *args,
+    **kwargs,
+) -> httpx.Response:
 
-    if not data:
-        return None
+    debug = config.debug or kwargs.get("debug")
 
-    data_type = sig.parameters["data"].annotation
+    try:
+        http_response.raise_for_status()
 
-    if isinstance(data, data_type):
-        return data
+    except httpx.HTTPStatusError as exc:
 
-    return parse_obj_as(data_type, data)
+        if exc.request.method in ["GET", "DELETE"]:
+            if debug:
+                logger.error(
+                    f"Error response {exc.response.status_code} while requesting {exc.request.url!r}."
+                )
+
+        else:
+
+            if debug:
+                logger.error(
+                    f"Error response {exc.response.status_code} while requesting {exc.request.url!r}. \n\n Body is:\n{data}\n\nHeaders are:\n{exc.request.headers}"
+                )
+
+        raise
+
+    return http_response
 
 
 def get_response_data(
-    sig: inspect.Signature,
     http_response: httpx.Response,
-    response: Optional[Type[Response]] = None,
-    responses: Optional[dict[int, Type[TResponse]]] = None,
-    raw: bool = False,
+    callable_types: dynamic.CallableTypes,
+    config: SDKActionConfig,
+    *args,
+    **kwargs,
 ) -> dict | list | TResponse:
+
+    raw = kwargs.get("raw")
 
     if raw:
         return http_response
 
-    response_type = sig.return_annotation
+    response_type = callable_types.return_type
 
     data: Optional[dict | str] = None
 
@@ -65,19 +81,19 @@ def get_response_data(
     if not isinstance(data, (dict, list)):
         return data
 
-    if not (responses or response_type):
+    if not (config.responses or response_type):
         return data
 
-    if response:
+    if config.response:
 
-        return parse_obj_as(response, data)
+        return parse_obj_as(config.response, data)
 
-    if responses:
+    if config.responses:
 
         status_code = http_response.status_code
 
         # If status_code is a key in response_model, use key's value as response model
-        if response_model_class := responses.get(status_code, None):
+        if response_model_class := config.responses.get(status_code, None):
             return parse_obj_as(response_model_class, data)
 
         return data
@@ -91,20 +107,20 @@ def get_response_data(
     )
 
 
+# New action
 def action(
     response: Optional[Type[Response]] = None,
     responses: Optional[dict[int, Type[TResponse]]] = None,
     debug: bool = False,
 ):
-    def decorator(func):
+    def decorator(
+        func: Callable[dynamic.TParams, dynamic.TReturnType]
+    ) -> Callable[dynamic.TParams, dynamic.TReturnType]:
 
-        sig = inspect.signature(func)
-
-        is_debug_mode = debug
-
-        @validate_arguments
-        @wraps(
+        return dynamic.make_action(
             func,
+            config=SDKActionConfig(response, responses, debug),
+            post_hooks=[handle_response, get_response_data],
             append_args=[
                 inspect.Parameter(
                     "debug",
@@ -120,62 +136,5 @@ def action(
                 ),
             ],
         )
-        async def wrapper(*args, **kwargs):
-
-            debug = kwargs.pop("debug", is_debug_mode)
-            raw = kwargs.pop("raw", False)
-            print("Debug is:", debug, "Raw is:", raw)
-
-            ba = sig.bind(*args, **kwargs)
-
-            data = ba.arguments.get("data", None)
-
-            if data:
-                data = get_request_data(sig, data)
-                ba.arguments["data"] = data
-
-            params = ba.arguments.get("params", None)
-
-            if params:
-                params = get_params(sig, params)
-                ba.arguments["params"] = params
-
-            ba.apply_defaults()
-
-            print("Arguments are:", ba.arguments)
-
-            # Validate function arguments before starting request
-            wrapper.validate(*ba.args, **ba.kwargs)
-
-            http_response = None
-
-            try:
-                http_response: httpx.Response = await func(*ba.args, **ba.kwargs)
-                http_response.raise_for_status()
-
-            except httpx.HTTPStatusError as exc:
-
-                if exc.request.method in ["GET", "DELETE"]:
-                    if debug:
-                        logger.error(
-                            f"Error response {exc.response.status_code} while requesting {exc.request.url!r}."
-                        )
-
-                else:
-
-                    if debug:
-                        logger.error(
-                            f"Error response {exc.response.status_code} while requesting {exc.request.url!r}. \n\n Body is:\n{data}\n\nHeaders are:\n{exc.request.headers}"
-                        )
-
-                raise
-
-            http_response = get_response_data(
-                sig, http_response, response, responses, raw=raw
-            )
-
-            return http_response
-
-        return wrapper
 
     return decorator

@@ -224,6 +224,7 @@ async def test_post(caplog):
         assert todo_with_dict.title == "Some title", "Error in created data"
         assert todo_with_dict.completed == False, "Error with created data"
 
+        exc: httpx.HTTPStatusError
         with pytest.raises(httpx.HTTPStatusError) as exc:
 
             data = {"test": True}

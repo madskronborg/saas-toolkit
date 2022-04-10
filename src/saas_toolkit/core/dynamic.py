@@ -1,5 +1,15 @@
 from inspect import BoundArguments, signature, Signature, Parameter, iscoroutinefunction
-from typing import Any, Callable, Generic, ParamSpec, Type, TypeVar, Literal, cast
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Generic,
+    ParamSpec,
+    Type,
+    TypeVar,
+    Literal,
+    cast,
+)
 from pydantic import parse_obj_as, validate_arguments
 from makefun import wraps
 from collections import OrderedDict
@@ -9,11 +19,14 @@ from collections.abc import Coroutine
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 
+from rich import inspect
+
 
 TAnnotation = TypeVar("TAnnotation")
 TType = TypeVar("TType", bound=Type)
 TParams = ParamSpec("TParams")
 TReturnType = TypeVar("TReturnType")
+TActionConfig = TypeVar("TActionConfig", dict[str, Any], None)
 
 
 # Callables
@@ -54,7 +67,7 @@ def make_async(func: Callable[TParams, TReturnType]) -> Callable[TParams, TRetur
 
 
 def get_callable_types(
-    func: Callable[TParams, TReturnType], include_self: bool = False
+    func: Callable[TParams, TReturnType], include_self: bool = True
 ) -> CallableTypes[TReturnType]:
 
     sig = signature(func, eval_str=True)
@@ -84,25 +97,29 @@ def convert_value_to_type(value: Any, annotation: TAnnotation) -> TAnnotation:
         TAnnotation: The value in the desired type
     """
 
-    print("Converting value:", value, "to type:", annotation)
+    if annotation == Signature.empty:
+        return value
 
     return parse_obj_as(annotation, value)
 
 
 def make_action(
     func: Callable[TParams, TReturnType],
+    config: TActionConfig = None,
     pre_hooks: list[
         Callable[
-            [BoundArguments, CallableTypes],
+            Concatenate[BoundArguments, CallableTypes, TActionConfig, TParams],
             BoundArguments,
         ]
     ] = [],
     post_hooks: list[
         Callable[
-            [TReturnType, CallableTypes],
+            Concatenate[TReturnType, CallableTypes, TActionConfig, TParams],
             TReturnType,
         ]
     ] = [],
+    # Makefun wraps settings
+    append_args: list[Parameter] = [],
 ) -> Callable[TParams, TReturnType]:
     """
     make_action
@@ -125,7 +142,7 @@ def make_action(
     Example:
         def my_decorator(func: Callable[TParams, TReturnType]):
 
-            def log_args(params: BoundArguments, callable_types: CallableTypes) -> BoundArguments:
+            def log_args(params: BoundArguments, callable_types: CallableTypes, config: TActionConfig, *args, **kwargs) -> BoundArguments:
 
                 print("Params are:", str(params))
 
@@ -136,11 +153,11 @@ def make_action(
 
                 return func(*args, **kwargs)
 
-            async def log_result_to_server(value: TReturnType, callable_types: CallableTypes):
+            async def log_result_to_server(result: TReturnType, callable_types: CallableTypes, config: TActionConfig, *args, **kwargs):
 
                 # Make async request to server ...
 
-                return value
+                return result
 
             return make_action(inner, pre_hooks=[log_args], post_hooks=[log_result_to_server])
 
@@ -153,15 +170,23 @@ def make_action(
        Callable[TParams, Coroutine[None, None, TReturnType]]: The wrapped function that returns a coroutine
     """
 
-    callable_types = get_callable_types(func)
-
-    @validate_arguments(config=dict(arbitrary_types_allowed=True))
-    @wraps(
+    callable_types = get_callable_types(
         func,
     )
+
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    @wraps(func, append_args=append_args)
     async def wrapper(*args: TParams.args, **kwargs: TParams.kwargs) -> TReturnType:
 
-        bound_params: BoundArguments = callable_types.sig.bind(*args, **kwargs)
+        bound_args = args
+        bound_kwargs = kwargs
+
+        for param in append_args:
+            bound_kwargs.pop(param.name)
+
+        bound_params: BoundArguments = callable_types.sig.bind(
+            *bound_args, **bound_kwargs
+        )
 
         for param_name, param_value in bound_params.arguments.items():
 
@@ -174,7 +199,9 @@ def make_action(
         if pre_hooks:
             for pre_hook in pre_hooks:
                 async_pre_hook = make_async(pre_hook)
-                bound_params = await async_pre_hook(bound_params, callable_types)
+                bound_params = await async_pre_hook(
+                    bound_params, callable_types, config, *args, **kwargs
+                )
 
         wrapper.validate(*bound_params.args, **bound_params.kwargs)
 
@@ -190,7 +217,9 @@ def make_action(
 
                 async_post_hook = make_async(post_hook)
 
-                result = await async_post_hook(result, callable_types)
+                result = await async_post_hook(
+                    result, callable_types, config, *args, **kwargs
+                )
 
         return result
 
