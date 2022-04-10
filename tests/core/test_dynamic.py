@@ -94,7 +94,7 @@ def test_convert_value_to_type():
 
 
 async def test_make_action():
-    def my_decorator(
+    def action(
         func: Callable[dynamic.TParams, Coroutine[None, None, dynamic.TReturnType]]
     ):
         def log_args(
@@ -109,13 +109,6 @@ async def test_make_action():
 
             return params
 
-        @wraps(func)
-        async def inner(
-            *args: dynamic.TParams.args, **kwargs: dynamic.TParams.kwargs
-        ) -> dynamic.TReturnType:
-
-            return await func(*args, **kwargs)
-
         async def log_result_to_server(
             result: dynamic.TReturnType,
             callable_types: dynamic.CallableTypes,
@@ -129,7 +122,7 @@ async def test_make_action():
             return result
 
         return dynamic.make_action(
-            inner, pre_hooks=[log_args], post_hooks=[log_result_to_server]
+            func, pre_hooks=[log_args], post_hooks=[log_result_to_server]
         )
 
     class TestSchema(Schema):
@@ -137,7 +130,7 @@ async def test_make_action():
         name: str
         family_names: list[str] = []
 
-    @my_decorator
+    @action
     async def wrapped_func(
         param1: str, param2: dict, param3: TestSchema, foo: str | None
     ) -> str | dict | TestSchema:

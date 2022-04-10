@@ -140,7 +140,7 @@ def make_action(
     The resulting decorator should only be used on coroutines i.e. functions defined with `async def`.
 
     Example:
-        def my_decorator(func: Callable[TParams, TReturnType]):
+        def action(func: Callable[TParams, TReturnType]):
 
             def log_args(params: BoundArguments, callable_types: CallableTypes, config: TActionConfig, *args, **kwargs) -> BoundArguments:
 
@@ -148,18 +148,13 @@ def make_action(
 
                 return params
 
-            @wraps(func)
-            async def inner(*args: TParams.args, **kwargs:TParams.kwargs) -> TReturnType:
-
-                return func(*args, **kwargs)
-
             async def log_result_to_server(result: TReturnType, callable_types: CallableTypes, config: TActionConfig, *args, **kwargs):
 
                 # Make async request to server ...
 
                 return result
 
-            return make_action(inner, pre_hooks=[log_args], post_hooks=[log_result_to_server])
+           return make_action(func, pre_hooks=[log_args], post_hooks=[log_result_to_server])
 
 
     Args:
