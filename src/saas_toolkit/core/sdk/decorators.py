@@ -17,7 +17,7 @@ TParams = TypeVar("TParams", bound=QueryParams)
 
 
 @dataclass
-class SDKActionConfig:
+class SDKActionConfig(dynamic.ActionConfig):
     response: Optional[Type[Response]]
     responses: Optional[dict[int, Type[TResponse]]]
     debug: bool

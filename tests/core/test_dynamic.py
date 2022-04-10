@@ -94,32 +94,33 @@ def test_convert_value_to_type():
 
 
 async def test_make_action():
+    def log_args(
+        params: inspect.BoundArguments,
+        callable_types: dynamic.CallableTypes,
+        config: None,
+        *args,
+        **kwargs
+    ) -> inspect.BoundArguments:
+
+        print("Params are:", str(params))
+
+        return params
+
+    async def log_result_to_server(
+        result: dynamic.TReturnType,
+        callable_types: dynamic.CallableTypes,
+        config: None,
+        *args,
+        **kwargs
+    ):
+
+        # Make async request to server ...
+
+        return result
+
     def action(
         func: Callable[dynamic.TParams, Coroutine[None, None, dynamic.TReturnType]]
     ):
-        def log_args(
-            params: inspect.BoundArguments,
-            callable_types: dynamic.CallableTypes,
-            config: None,
-            *args,
-            **kwargs
-        ) -> inspect.BoundArguments:
-
-            print("Params are:", str(params))
-
-            return params
-
-        async def log_result_to_server(
-            result: dynamic.TReturnType,
-            callable_types: dynamic.CallableTypes,
-            config: None,
-            *args,
-            **kwargs
-        ):
-
-            # Make async request to server ...
-
-            return result
 
         return dynamic.make_action(
             func, pre_hooks=[log_args], post_hooks=[log_result_to_server]
