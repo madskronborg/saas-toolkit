@@ -5,11 +5,11 @@ from saas_toolkit.core import dynamic
 
 def test_redis_settings():
 
-    paramters, return_type = dynamic.get_callable_types(redis.Redis.__init__)
+    callable_types = dynamic.get_callable_types(redis.Redis.__init__)
 
     settings = redis.RedisSettings()
 
-    for parameter in paramters:
+    for parameter in callable_types.parameters.values():
 
         # Assert attr exists
         attr_name = f"REDIS_{parameter.name.upper()}"

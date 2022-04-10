@@ -1,5 +1,5 @@
 from inspect import BoundArguments, signature, Signature, Parameter, iscoroutinefunction
-from typing import Any, Callable, ParamSpec, Type, TypeVar, Literal
+from typing import Any, Callable, Generic, ParamSpec, Type, TypeVar, Literal, cast
 from pydantic import parse_obj_as, validate_arguments
 from makefun import wraps
 from collections import OrderedDict
@@ -18,16 +18,14 @@ TReturnType = TypeVar("TReturnType")
 
 # Callables
 @dataclass
-class CallableTypes:
+class CallableTypes(Generic[TReturnType]):
 
     parameters: OrderedDict[str, Parameter]
-    return_type: Any
+    return_type: TReturnType
     sig: Signature
 
 
-def make_async(
-    func: Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]]
-) -> Callable[TParams, Coroutine[None, None, TReturnType]]:
+def make_async(func: Callable[TParams, TReturnType]) -> Callable[TParams, TReturnType]:
     """
     make_async
 
@@ -46,18 +44,18 @@ def make_async(
     async def wrapper(*args: TParams.args, **kwargs: TParams.kwargs) -> TReturnType:
 
         if iscoroutinefunction(func):
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
 
         future = pool.submit(func, *args, **kwargs)
 
-        return asyncio.wrap_future(future)
+        return await asyncio.wrap_future(future)
 
     return wrapper
 
 
 def get_callable_types(
     func: Callable[TParams, TReturnType], include_self: bool = False
-) -> CallableTypes:
+) -> CallableTypes[TReturnType]:
 
     sig = signature(func, eval_str=True)
 
@@ -86,27 +84,26 @@ def convert_value_to_type(value: Any, annotation: TAnnotation) -> TAnnotation:
         TAnnotation: The value in the desired type
     """
 
-    if isinstance(value, annotation):
-        return value
+    print("Converting value:", value, "to type:", annotation)
 
     return parse_obj_as(annotation, value)
 
 
 def make_action(
-    func: Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]],
+    func: Callable[TParams, TReturnType],
     pre_hooks: list[
         Callable[
             [BoundArguments, CallableTypes],
-            BoundArguments | Coroutine[None, None, BoundArguments],
+            BoundArguments,
         ]
     ] = [],
     post_hooks: list[
         Callable[
             [TReturnType, CallableTypes],
-            TReturnType | Coroutine[None, None, TReturnType],
+            TReturnType,
         ]
     ] = [],
-) -> Callable[TParams, Coroutine[None, None, TReturnType]]:
+) -> Callable[TParams, TReturnType]:
     """
     make_action
 
@@ -123,8 +120,10 @@ def make_action(
 
     `pre_hooks` and `post_hooks` are called in order, therefore, any alterations you make in a previous hook will be present in the following hooks.
 
+    The resulting decorator should only be used on coroutines i.e. functions defined with `async def`.
+
     Example:
-        def my_decorator(func: Callable[TParams, TReturnType], TReturnType):
+        def my_decorator(func: Callable[TParams, TReturnType]):
 
             def log_args(params: BoundArguments, callable_types: CallableTypes) -> BoundArguments:
 
@@ -132,7 +131,8 @@ def make_action(
 
                 return params
 
-            def inner(*args: TParams.args, **kwargs:TParams.kwargs) -> TReturnType:
+            @wraps(func)
+            async def inner(*args: TParams.args, **kwargs:TParams.kwargs) -> TReturnType:
 
                 return func(*args, **kwargs)
 
@@ -155,11 +155,11 @@ def make_action(
 
     callable_types = get_callable_types(func)
 
-    @validate_arguments
-    @wraps(func)
-    async def wrapper(
-        *args: TParams.args, **kwargs: TParams.kwargs
-    ) -> Coroutine[None, None, TReturnType]:
+    @validate_arguments(config=dict(arbitrary_types_allowed=True))
+    @wraps(
+        func,
+    )
+    async def wrapper(*args: TParams.args, **kwargs: TParams.kwargs) -> TReturnType:
 
         bound_params: BoundArguments = callable_types.sig.bind(*args, **kwargs)
 
@@ -173,11 +173,14 @@ def make_action(
 
         if pre_hooks:
             for pre_hook in pre_hooks:
-                bound_params = await make_async(pre_hook)(bound_params, callable_types)
+                async_pre_hook = make_async(pre_hook)
+                bound_params = await async_pre_hook(bound_params, callable_types)
 
         wrapper.validate(*bound_params.args, **bound_params.kwargs)
 
-        result: TReturnType = await make_async(func)(
+        async_func = make_async(func)
+
+        result: TReturnType = await async_func(
             *bound_params.args, **bound_params.kwargs
         )
 
@@ -185,7 +188,9 @@ def make_action(
 
             for post_hook in post_hooks:
 
-                result = await make_async(post_hook)(result, callable_types)
+                async_post_hook = make_async(post_hook)
+
+                result = await async_post_hook(result, callable_types)
 
         return result
 

@@ -11,9 +11,9 @@ class RedisSettings(BaseSettings):
 
     def __new__(cls: type[Self]) -> Self:
 
-        parameters, return_type = dynamic.get_callable_types(Redis.__init__)
+        callable_types = dynamic.get_callable_types(Redis.__init__)
 
-        for parameter in parameters:
+        for parameter in callable_types.parameters.values():
 
             name = f"REDIS_{parameter.name.upper()}"
 
