@@ -6,6 +6,7 @@ loguru
 deepmerge
 httpx[http2]
 makefun
+deepdiff
 
 # Redis
 redis
