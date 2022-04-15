@@ -1,4 +1,5 @@
-from typing import Any, Generic, TypeVar, overload
+from itertools import chain
+from typing import Any, Generic, Type, TypeVar, TypedDict, overload
 from typing_extensions import Self
 from pydantic import BaseModel, Field, parse_obj_as, validator
 from pydantic.generics import GenericModel
@@ -9,7 +10,10 @@ TTemplateItem = TypeVar("TTemplateItem", bound="BaseTemplateItem")
 TTemplate = TypeVar("TTemplate", bound="BaseTemplate")
 TTemplateGroup = TypeVar("TTemplateGroup", bound="BaseTemplateGroup")
 TTemplateStructure = TypeVar("TTemplateStructure", bound="BaseTemplateStructure")
-TTemplateBuild = TypeVar("TTemplateBuild", bound=list[dict])
+TTemplateBuild = TypeVar("TTemplateBuild", bound="BaseTemplateBuild")
+TTemplateBuildData = TypeVar("TTemplateBuildData", bound=list)
+
+# Simple types for self-reference
 
 
 class BaseTemplateVariable(BaseModel):
@@ -17,15 +21,15 @@ class BaseTemplateVariable(BaseModel):
     name: str
     value: str | int | None = None
     required: bool = False
-    template: TTemplate | None = None
-    group: TTemplateGroup | None = None
+    template: str | int | None = None
+    group: str | int | None = None
 
 
 class BaseTemplateItem(GenericModel, Generic[TTemplate]):
 
     name: str | int | None = None
     value: dict
-    template: TTemplate | None = None
+    template: str | int | None = None
 
 
 class BaseTemplate(
@@ -36,7 +40,7 @@ class BaseTemplate(
     category: str = "default"
     items: list[TTemplateItem]
     variables: list[TTemplateVariable] = []
-    group: TTemplateGroup | None = None
+    group: str | int | None = None
 
     extends: TTemplate | None = None
 
@@ -44,6 +48,17 @@ class BaseTemplate(
         None,
         description="A list of keys from the items' value dictionary that should be unique in the final build.",
     )
+
+    @validator("variables", "items", each_item=True)
+    def add_template_to_variables_and_items(
+        cls, v: TTemplateItem | TTemplateVariable, values: dict
+    ):
+
+        name = values.get("name", None)
+
+        v.template = name
+
+        return v
 
 
 class BaseTemplateGroup(
@@ -55,6 +70,15 @@ class BaseTemplateGroup(
     variables: list[TTemplateVariable] = []
 
     extends: TTemplateGroup | None = None
+
+    @validator("templates", each_item=True)
+    def add_group_to_templates(cls, v: TTemplate, values: dict):
+
+        name = values.get("name", None)
+
+        v.group = name
+
+        return v
 
 
 class BaseTemplateStructure(
@@ -71,9 +95,9 @@ class BaseTemplateStructure(
     variables: list[TTemplateVariable]
 
 
-class BaseTemplateBuild(Generic[TTemplateBuild]):
+class BaseTemplateBuild(Generic[TTemplateBuildData]):
 
-    data: TTemplateBuild
+    data: TTemplateBuildData
 
     def inspect(self) -> dict:
         """
@@ -86,6 +110,14 @@ class BaseTemplateBuild(Generic[TTemplateBuild]):
         Returns:
             dict: _description_
         """
+        pass
+
+    def merge(self, other: TTemplateBuildData) -> TTemplateBuildData:
+
+        pass
+
+    def get_difference(self, other: TTemplateBuildData) -> dict:
+        pass
 
 
 class BaseTemplateBuilder(
@@ -99,32 +131,17 @@ class BaseTemplateBuilder(
     ]
 ):
     class Config:
-        template_structure_model: TTemplateStructure
-        template_build_model: TTemplateBuild
+        template_structure_model: Type[TTemplateStructure]
+        template_build_model: Type[TTemplateBuild]
 
     _group: TTemplateGroup | None = None
     _user_templates: dict[str, TTemplate] = {}
     _user_variables: dict[str, TTemplateVariable] = {}
 
     # Private
-    def _get_children(
-        self, obj: TTemplateGroup | TTemplate
-    ) -> list[TTemplateGroup | TTemplate]:
-
-        children: list[TTemplateGroup | TTemplate] = []
-
-        subject = obj
-
-        # Get children
-        while subject.extends is not None:
-            children.append(subject)
-            subject = subject.extends
-
-        return children.reverse()
-
     def _get_item_index(
         self,
-        items: list[TTemplateItem],
+        search_items: list[TTemplateItem],
         item: TTemplateItem,
         search_keys: set[str] = [],
     ) -> int | None:
@@ -137,8 +154,8 @@ class BaseTemplateBuilder(
         index: int | None = next(
             (
                 index
-                for index, item in enumerate(items)
-                if item.dict(include={"value": search_keys}) == search_params
+                for index, search_item in enumerate(search_items)
+                if search_item.dict(include={"value": search_keys}) == search_params
             ),
             None,
         )
@@ -150,7 +167,7 @@ class BaseTemplateBuilder(
 
     def _get_structure(self) -> TTemplateStructure:
 
-        groups = self._get_children(self._group) if self._group else []
+        group = self._group
 
         templates: dict[str, TTemplate] = {}
 
@@ -158,46 +175,39 @@ class BaseTemplateBuilder(
 
         variables: dict[str, TTemplateVariable] = {}
 
-        for group in groups:
+        for template in chain(group.templates, self._user_templates):
 
-            for group_template in group.templates:
+            templates[template.name] = template
 
-                group_templates = self._get_children(group_template)
+            unique_keys = template.unique_keys
 
-                for template in group_templates:
+            for item in template.items:
+                item_index: int | None = None
 
-                    template.group = group
+                if unique_keys:
+                    # Check if items is already added - if it is, we have to replace it
+                    item_index = self._get_item_index(items, item, unique_keys)
 
-                    templates[template.name] = template
+                if item_index:
+                    items[item_index] = item
+                else:
+                    items.append(item)
 
-                    unique_keys = template.unique_keys
+            for variable in template.variables:
 
-                    for item in template.items:
-                        item_index: int | None = None
+                variables[variable.name] = variable
 
-                        if unique_keys:
-                            # Check if items is already added - if it is, we have to replace it
-                            item_index = self._get_item_index(items, item, unique_keys)
-
-                        if item_index:
-                            items[item_index] = item
-                        else:
-                            items.append(item)
-
-                    for variable in template.variables:
-                        variable.template = template
-
-                        variables[variable.name] = variable
-
-            for group_variable in group.variables:
-                group_variable.group = group
-                variables[group_variable.name] = group_variable
+        for group_variable in group.variables:
+            variables[group_variable.name] = group_variable
 
         for user_variable in self._user_variables.values():
             variables[user_variable.name] = user_variable
 
+        template_list = [t for t in templates.values()]
+        variable_list = [v for v in variables.values()]
+
         return self.Config.template_structure_model(
-            templates=templates, variables=variables
+            templates=template_list, items=items, variables=variable_list
         )
 
     def _get_categories(self, structure: TTemplateStructure | None = None) -> set[str]:
