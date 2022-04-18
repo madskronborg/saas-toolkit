@@ -1,13 +1,13 @@
 # Getting Started
 
-To get started with SaaS Toolkit, you will first need to install the library:
+To get started with Kitman, you will first need to install the library:
 
 In a shell run: <br>
-`pip install saas-toolkit`
+`pip install kitman`
 
 ## Configuration
 
-In your `main.py` file (where your FastAPI app is), you will need to configure SaaS Toolkit. <br>
+In your `main.py` file (where your FastAPI app is), you will need to configure Kitman. <br>
 You can enable / disable logging, add a custom `SQLAlchemy` `MetaData` class and much more.
 
 **Important** <br>
@@ -15,7 +15,7 @@ The configuration has to be made before any other part of the library is importe
 
 ```py
 # In main.py
-from saas_toolkit import configure, Settings
+from kitman import configure, Settings
 
 
 # First we configure sass_toolkit
@@ -40,14 +40,14 @@ You have several settings options at your disposal:
 
 - `AppSettings` (_required_) - The base settings class. Subclass Pydantic's `BaseSettings` class and adds a few generic attributes like `PROJECT_NAME`, `ENV` and `SECRET`.
 - `CorsSettings` - A mixin to configure CORS. Will automatically enable `FastAPI`'s `CorsMiddleware`.
-- `PostgresSettings` - A mixin to configure postgres. If a database is not provided to the `setup` function, a database will automatically be made. If `metadata` is not provided when configuring SaaS Toolkit, a `MetaData` instance will be created automatically.
+- `PostgresSettings` - A mixin to configure postgres. If a database is not provided to the `setup` function, a database will automatically be made. If `metadata` is not provided when configuring Kitman, a `MetaData` instance will be created automatically.
 
 Each of these settings can be combined at will. <br>
 The only required class is `AppSettings`, which needs to be subclassed.
 
 ```py
 # in config.py
-from saas_toolkit.fastapi.conf import AppSettings, CorsSettings, PostgresSettings
+from kitman.fastapi.conf import AppSettings, CorsSettings, PostgresSettings
 
 class Settings(AppSettings, CorsSettings, PostgresSettings):
     pass
@@ -62,7 +62,7 @@ Full list of environment variables can be found [here.](fastapi/configuration.md
 
 ---
 
-The next step is to setup the FastAPI `app` instance, so it works with all the goodies from SaaS Toolkit such as automatic error responses + starting and stopping of database etc.
+The next step is to setup the FastAPI `app` instance, so it works with all the goodies from Kitman such as automatic error responses + starting and stopping of database etc.
 
 ```py
 # In main.py
@@ -73,11 +73,11 @@ from .config import settings # Import the settings variable we created before
 from sass_toolkit.fastapi.conf import setup
 app = FastAPI()
 
-setup(app, settings) # Notice we don't pass the `db` kwarg, since we wan't SaaS Toolkit to auto create our database.
+setup(app, settings) # Notice we don't pass the `db` kwarg, since we wan't Kitman to auto create our database.
 ```
 
 Voilà! Our FastAPI app now have:
 
 - CORS enabled
 - A Postgres database connection which will be started and stopped automatically on app start and shutdown
-- Error responses whenever we raise an error that subclasses `saas_toolkit.errors.Error`.
+- Error responses whenever we raise an error that subclasses `kitman.errors.Error`.

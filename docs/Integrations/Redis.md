@@ -6,7 +6,7 @@ The integration includes `hiredis` by default, which includes up to 10X performa
 
 ## Settings
 
-Add support for configuring your Redis client(s) directly in your app settings with `saas_toolkit.ext.redis.RedisSettings`.
+Add support for configuring your Redis client(s) directly in your app settings with `kitman.ext.redis.RedisSettings`.
 
 **Environment Variables**
 
@@ -25,8 +25,8 @@ For further settings, please consult `redis-py`'s documentation. Any argument or
 
 ```py
 # in conf.py
-from saas_toolkit.fastapi.conf import AppSettings
-from saas_toolkit.ext import redis
+from kitman.fastapi.conf import AppSettings
+from kitman.ext import redis
 
 class Settings(AppSettings, redis.RedisSettings):
     pass
@@ -35,7 +35,7 @@ class Settings(AppSettings, redis.RedisSettings):
 
 ## Usage
 
-The async Redis client class can be imported from `saas_toolkit.ext.redis.Redis`.<br>
+The async Redis client class can be imported from `kitman.ext.redis.Redis`.<br>
 It is a wrapper around `redis-py`'s `redis.asyncio.Redis` client. Please consult `redis-py`'s documentation for further usage documentation.
 
 **Example**
@@ -43,7 +43,7 @@ It is a wrapper around `redis-py`'s `redis.asyncio.Redis` client. Please consult
 ```py
 
 from app.conf import settings
-from saas_toolkit.ext import redis
+from kitman.ext import redis
 
 r = redis.Redis(**settings.get_redis_options())
 

@@ -1,6 +1,6 @@
 import pytest
-from saas_toolkit.ext import redis
-from saas_toolkit.core import dynamic
+from kitman.ext import redis
+from kitman.core import dynamic
 
 
 def test_redis_settings():

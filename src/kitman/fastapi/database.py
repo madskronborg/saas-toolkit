@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from databases import Database
-from saas_toolkit.logging import logger
+from kitman.logging import logger
 
 
 def init_db(app: FastAPI, db: Database) -> None:

@@ -17,7 +17,7 @@ It implements the minimum required fields for a consistent data model.
 
 ```py
 import ormar
-from saas_toolkit.db import models
+from kitman.db import models
 
 class MyModel(models.BaseModel):
 
@@ -43,7 +43,7 @@ Implements `orders_by` which is set to `["order"]`
 ```py
 
 import ormar
-from saas_toolkit.db import models
+from kitman.db import models
 
 class MyOrderableModel(models.BaseModel, models.OrderableMixin):
 

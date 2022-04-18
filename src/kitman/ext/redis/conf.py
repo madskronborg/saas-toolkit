@@ -1,7 +1,7 @@
 from typing import Any
 from typing_extensions import Self
 from pydantic import BaseSettings
-from saas_toolkit.core import dynamic
+from kitman.core import dynamic
 from .client import Redis, Sentinel
 
 

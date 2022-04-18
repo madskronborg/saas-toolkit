@@ -5,12 +5,12 @@ from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, SecretStr, validator
 from typing import Optional
 from .database import init_db, start_database, stop_database
 from databases import Database
-from saas_toolkit import errors
+from kitman import errors
 from sqlalchemy import MetaData
-from saas_toolkit.conf import configure, SETTINGS
+from kitman.conf import configure, SETTINGS
 from fastapi.middleware.cors import CORSMiddleware
 from .errors import exception_handler
-from saas_toolkit.core.converters import convert_value_to_list
+from kitman.core.converters import convert_value_to_list
 
 
 class AppSettings(BaseSettings):

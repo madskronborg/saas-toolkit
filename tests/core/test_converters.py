@@ -1,11 +1,11 @@
 import pytest
-from saas_toolkit.conf import SETTINGS
-from saas_toolkit.core import converters
+from kitman.conf import SETTINGS
+from kitman.core import converters
 
 
 def test_convert_value_to_list(db):
 
-    from saas_toolkit import core
+    from kitman import core
 
     # Convert list to list
     assert converters.convert_value_to_list([1]) == [

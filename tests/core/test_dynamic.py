@@ -1,8 +1,8 @@
 from typing import Callable, Coroutine
 from typing_extensions import reveal_type
 
-from saas_toolkit.core.schemas import Schema
-from saas_toolkit.core import dynamic
+from kitman.core.schemas import Schema
+from kitman.core import dynamic
 import inspect
 from collections import OrderedDict
 from makefun import wraps

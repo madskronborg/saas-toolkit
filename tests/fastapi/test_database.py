@@ -1,7 +1,7 @@
 from databases import Database
 from fastapi import FastAPI
 import pytest
-from saas_toolkit.fastapi.database import init_db, start_database, stop_database
+from kitman.fastapi.database import init_db, start_database, stop_database
 
 
 def test_init_db(app: FastAPI, db: Database):

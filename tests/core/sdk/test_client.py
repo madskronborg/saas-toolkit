@@ -3,7 +3,7 @@ import httpx
 
 import pytest
 
-from saas_toolkit.core import sdk
+from kitman.core import sdk
 
 
 class TodoResponse(sdk.Response):

@@ -4,8 +4,8 @@ import pytest
 from starlette.testclient import TestClient
 import sqlalchemy
 from fastapi import FastAPI
-from saas_toolkit import configure
-from saas_toolkit.conf import Settings
+from kitman import configure
+from kitman.conf import Settings
 from . import variables
 
 metadata = variables.METADATA

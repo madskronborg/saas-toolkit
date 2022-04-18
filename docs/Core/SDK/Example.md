@@ -6,7 +6,7 @@ Firstly, let's look a implementing a way to retrieve and list our current todos 
 
 ```py
 # Import in all files
-from saas_toolkit.core import sdk
+from kitman.core import sdk
 
 # In responses.py
 class TodoItemResponse(sdk.Response):

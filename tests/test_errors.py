@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from saas_toolkit import errors
+from kitman import errors
 
 
 def test_error():

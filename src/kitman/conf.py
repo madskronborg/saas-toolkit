@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy import MetaData
 from .logging import logger
 from deepmerge import always_merger
-from saas_toolkit import errors
+from kitman import errors
 
 
 class BaseSettings(BaseModel):
@@ -60,6 +60,6 @@ def configure(user_settings: Settings | dict, partial: bool = False) -> None:
 
     # Logging
     if SETTINGS.logging.enable:
-        logger.enable("saas_toolkit")
+        logger.enable("kitman")
     else:
-        logger.disable("saas_toolkit")
+        logger.disable("kitman")

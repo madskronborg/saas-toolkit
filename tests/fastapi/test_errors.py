@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
-from saas_toolkit import errors
-from saas_toolkit.fastapi.conf import setup as fastapi_setup
+from kitman import errors
+from kitman.fastapi.conf import setup as fastapi_setup
 from starlette.testclient import TestClient
 
 

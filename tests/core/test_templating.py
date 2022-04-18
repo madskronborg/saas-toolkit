@@ -1,4 +1,4 @@
-from saas_toolkit.core.templating import (
+from kitman.core.templating import (
     TemplateGroup,
     Template,
     TemplateItem,

@@ -6,8 +6,8 @@ from .request import Request, QueryParams
 from .response import Response
 import httpx
 from pydantic import parse_obj_as, validate_arguments
-from saas_toolkit import logger
-from saas_toolkit.core import dynamic
+from kitman import logger
+from kitman.core import dynamic
 from . import errors
 from dataclasses import dataclass
 

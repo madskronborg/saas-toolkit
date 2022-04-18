@@ -1,5 +1,5 @@
 import redis.asyncio as redis
-from saas_toolkit.conf import SETTINGS
+from kitman.conf import SETTINGS
 
 
 class Redis(redis.Redis):

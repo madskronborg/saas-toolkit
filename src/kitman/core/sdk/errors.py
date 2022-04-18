@@ -1,4 +1,4 @@
-from saas_toolkit import errors
+from kitman import errors
 
 
 class InvalidParams(errors.Error):

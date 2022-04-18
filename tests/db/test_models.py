@@ -5,8 +5,8 @@ from fastapi import FastAPI
 import ormar
 import pytest
 
-from saas_toolkit.db import models
-from saas_toolkit import errors
+from kitman.db import models
+from kitman import errors
 
 
 class MyModel(models.BaseModel):

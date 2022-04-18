@@ -4,9 +4,9 @@ import uuid
 import ormar
 from ormar.models import T
 
-from saas_toolkit import errors
+from kitman import errors
 
-from saas_toolkit.conf import SETTINGS
+from kitman.conf import SETTINGS
 
 # Queryset
 
