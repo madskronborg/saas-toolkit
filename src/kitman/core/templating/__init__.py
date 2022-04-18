@@ -1,3 +1,4 @@
+from . import domain
 from . import generics
 from .templating import (
     TemplateVariable,

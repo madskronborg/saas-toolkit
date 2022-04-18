@@ -1,148 +1,36 @@
 from itertools import chain
-from typing import Any, Generic, Type, TypeVar, TypedDict, overload
+from typing import Generic, Type, overload
 from typing_extensions import Self
-from pydantic import BaseModel, Field, parse_obj_as, validator
-from pydantic.generics import GenericModel
-from operator import itemgetter
+from pydantic import parse_obj_as
 
-TTemplateVariable = TypeVar("TTemplateVariable", bound="BaseTemplateVariable")
-TTemplateItem = TypeVar("TTemplateItem", bound="BaseTemplateItem")
-TTemplate = TypeVar("TTemplate", bound="BaseTemplate")
-TTemplateGroup = TypeVar("TTemplateGroup", bound="BaseTemplateGroup")
-TTemplateStructure = TypeVar("TTemplateStructure", bound="BaseTemplateStructure")
-TTemplateBuild = TypeVar("TTemplateBuild", bound="BaseTemplateBuild")
-TTemplateBuildData = TypeVar("TTemplateBuildData", bound=list)
+from collections import OrderedDict
 
-# Simple types for self-reference
-
-
-class BaseTemplateVariable(BaseModel):
-
-    name: str
-    value: str | int | None = None
-    required: bool = False
-    template: str | int | None = None
-    group: str | int | None = None
-
-
-class BaseTemplateItem(GenericModel, Generic[TTemplate]):
-
-    name: str | int | None = None
-    value: dict
-    template: str | int | None = None
-
-
-class BaseTemplate(
-    GenericModel, Generic[TTemplateGroup, TTemplate, TTemplateItem, TTemplateVariable]
-):
-
-    name: str | int | None = None
-    category: str = "default"
-    items: list[TTemplateItem]
-    variables: list[TTemplateVariable] = []
-    group: str | int | None = None
-
-    extends: TTemplate | None = None
-
-    unique_keys: set[str] | None = Field(
-        None,
-        description="A list of keys from the items' value dictionary that should be unique in the final build.",
-    )
-
-    @validator("variables", "items", each_item=True)
-    def add_template_to_variables_and_items(
-        cls, v: TTemplateItem | TTemplateVariable, values: dict
-    ):
-
-        name = values.get("name", None)
-
-        v.template = name
-
-        return v
-
-
-class BaseTemplateGroup(
-    GenericModel, Generic[TTemplateGroup, TTemplate, TTemplateVariable]
-):
-
-    name: str | int | None = None
-    templates: list[TTemplate]
-    variables: list[TTemplateVariable] = []
-
-    extends: TTemplateGroup | None = None
-
-    @validator("templates", each_item=True)
-    def add_group_to_templates(cls, v: TTemplate, values: dict):
-
-        name = values.get("name", None)
-
-        v.group = name
-
-        return v
-
-
-class BaseTemplateStructure(
-    GenericModel, Generic[TTemplate, TTemplateItem, TTemplateVariable]
-):
-    """
-    TemplateStructure
-
-    The first item in each list is of lowest importance and can be overwritten by items later on in the list.
-    """
-
-    templates: list[TTemplate]
-    items: list[TTemplateItem]
-    variables: list[TTemplateVariable]
-
-
-class BaseTemplateBuild(Generic[TTemplateBuildData]):
-
-    data: TTemplateBuildData
-
-    def inspect(self) -> dict:
-        """
-        inspect
-
-        Inspect build.
-
-        Discover which templates, variables etc. resulted in creating which parts of the build result.
-
-        Returns:
-            dict: _description_
-        """
-        pass
-
-    def merge(self, other: TTemplateBuildData) -> TTemplateBuildData:
-
-        pass
-
-    def get_difference(self, other: TTemplateBuildData) -> dict:
-        pass
+from . import domain
 
 
 class BaseTemplateBuilder(
     Generic[
-        TTemplateGroup,
-        TTemplate,
-        TTemplateItem,
-        TTemplateVariable,
-        TTemplateStructure,
-        TTemplateBuild,
+        domain.TTemplateGroup,
+        domain.TTemplate,
+        domain.TTemplateItem,
+        domain.TTemplateVariable,
+        domain.TTemplateStructure,
+        domain.TTemplateBuild,
     ]
 ):
     class Config:
-        template_structure_model: Type[TTemplateStructure]
-        template_build_model: Type[TTemplateBuild]
+        template_structure_model: Type[domain.TTemplateStructure]
+        template_build_model: Type[domain.TTemplateBuild]
 
-    _group: TTemplateGroup | None = None
-    _user_templates: dict[str, TTemplate] = {}
-    _user_variables: dict[str, TTemplateVariable] = {}
+    _group: domain.TTemplateGroup | None = None
+    _user_templates: dict[str, domain.TTemplate] = {}
+    _user_variables: dict[str, domain.TTemplateVariable] = {}
 
     # Private
     def _get_item_index(
         self,
-        search_items: list[TTemplateItem],
-        item: TTemplateItem,
+        search_items: list[domain.TTemplateItem],
+        item: domain.TTemplateItem,
         search_keys: set[str] = [],
     ) -> int | None:
 
@@ -155,7 +43,8 @@ class BaseTemplateBuilder(
             (
                 index
                 for index, search_item in enumerate(search_items)
-                if search_item.dict(include={"value": search_keys}) == search_params
+                if search_item.dict(include={"value": search_keys})["value"]
+                == search_params
             ),
             None,
         )
@@ -165,15 +54,73 @@ class BaseTemplateBuilder(
 
         return None
 
-    def _get_structure(self) -> TTemplateStructure:
+    @overload
+    def _get_tree(self, obj: domain.TTemplate) -> list[domain.TTemplate]:
+        ...
 
-        group = self._group
+    @overload
+    def _get_tree(
+        self, obj: domain.TTemplate, return_dict=True
+    ) -> OrderedDict[str, domain.TTemplate]:
+        ...
 
-        templates: dict[str, TTemplate] = {}
+    @overload
+    def _get_tree(self, obj: domain.TTemplateGroup) -> list[domain.TTemplateGroup]:
+        ...
 
-        items: list[TTemplateItem] = []
+    @overload
+    def _get_tree(
+        self, obj: domain.TTemplateGroup, return_dict=True
+    ) -> OrderedDict[str, domain.TTemplateGroup]:
+        ...
 
-        variables: dict[str, TTemplateVariable] = {}
+    def _get_tree(
+        self, obj: domain.TTemplateGroup | domain.TTemplate, return_dict: bool = False
+    ) -> list[domain.TTemplateGroup | domain.TTemplate] | OrderedDict[
+        str, domain.TTemplateGroup | domain.TTemplate
+    ]:
+
+        children: list[domain.TTemplateGroup | domain.TTemplate] = []
+
+        if obj.children:
+            for child in obj.children:
+
+                children.extend(self._get_tree(child))
+
+        # Add obj to children
+        children.append(obj)
+
+        tree: OrderedDict[str, domain.TTemplateGroup | domain.TTemplate] = {}
+
+        for child in children:
+            tree[child.name] = child
+
+        if return_dict:
+            return tree
+
+        return [t for t in tree.values()]
+
+    def _get_structure(self) -> domain.TTemplateStructure:
+
+        # Groups
+        groups: list[domain.TTemplateGroup] = self._get_tree(self._group)
+
+        # Templates
+        templates: dict[str, domain.TTemplate] = {}
+
+        # Items
+
+        # Variables
+
+        items: list[domain.TTemplateItem] = []
+
+        variables: dict[str, domain.TTemplateVariable] = {}
+
+        for group in groups:
+
+            template: domain.TTemplate
+            for template in group.templates:
+                templates[template.name] = template
 
         for template in chain(group.templates, self._user_templates):
 
@@ -210,7 +157,9 @@ class BaseTemplateBuilder(
             templates=template_list, items=items, variables=variable_list
         )
 
-    def _get_categories(self, structure: TTemplateStructure | None = None) -> set[str]:
+    def _get_categories(
+        self, structure: domain.TTemplateStructure | None = None
+    ) -> set[str]:
 
         if not structure:
             structure = self._get_structure()
@@ -223,25 +172,25 @@ class BaseTemplateBuilder(
         return categories
 
     # Public methods
-    def set_group(self, group: TTemplateGroup) -> Self:
+    def set_group(self, group: domain.TTemplateGroup) -> Self:
 
         self._group = group
 
         return self
 
-    def add_user_template(self, template: TTemplate) -> Self:
+    def add_user_template(self, template: domain.TTemplate) -> Self:
 
         self._user_templates[template.name] = template
 
         return self
 
-    def add_user_variable(self, variable: TTemplateVariable) -> Self:
+    def add_user_variable(self, variable: domain.TTemplateVariable) -> Self:
 
         self._user_variables[variable.name] = variable
 
         return self
 
-    def build(self, group_by_category: bool = True) -> TTemplateBuild:
+    def build(self, group_by_category: bool = True) -> domain.TTemplateBuild:
 
         build_data = None
         return parse_obj_as(self.Config.template_build_model, build_data)

@@ -1,34 +1,37 @@
 from __future__ import annotations
+from . import domain
 from . import generics
 
 
-class TemplateVariable(generics.BaseTemplateVariable):
+class TemplateVariable(domain.BaseTemplateVariable):
     pass
 
 
-class TemplateItem(generics.BaseTemplateItem["Template"]):
+class TemplateItem(domain.BaseTemplateItem["Template"]):
     pass
 
 
-class Template(
-    generics.BaseTemplate["TemplateGroup", "Template", TemplateItem, TemplateVariable]
-):
+class Template(domain.BaseTemplate["Template", TemplateItem, TemplateVariable]):
     pass
 
 
 class TemplateGroup(
-    generics.BaseTemplateGroup["TemplateGroup", Template, TemplateVariable]
+    domain.BaseTemplateGroup["TemplateGroup", Template, TemplateVariable]
 ):
     pass
 
 
-class TemplateStructure(
-    generics.BaseTemplateStructure[Template, TemplateItem, TemplateVariable]
+class TemplateStructureItem(
+    domain.BaseTemplateStructureItem[Template, TemplateItem, TemplateVariable]
 ):
     pass
 
 
-class TemplateBuild(generics.BaseTemplateBuild[list[dict]]):
+class TemplateStructure(domain.BaseTemplateStructure[TemplateStructureItem]):
+    pass
+
+
+class TemplateBuild(domain.BaseTemplateBuild[list[dict], TemplateStructure]):
     pass
 
 
