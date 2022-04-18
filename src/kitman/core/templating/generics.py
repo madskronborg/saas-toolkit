@@ -79,6 +79,19 @@ class BaseTemplateBuilder(
     ) -> list[domain.TTemplateGroup | domain.TTemplate] | OrderedDict[
         str, domain.TTemplateGroup | domain.TTemplate
     ]:
+        """
+        _get_tree
+
+        Get a tree of all children and the object itself.
+        The tree will be in reverse order -> last child is first, obj is last
+
+        Args:
+            obj (domain.TTemplateGroup | domain.TTemplate): _description_
+            return_dict (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            list[domain.TTemplateGroup | domain.TTemplate] | OrderedDict[ str, domain.TTemplateGroup | domain.TTemplate ]: _description_
+        """
 
         children: list[domain.TTemplateGroup | domain.TTemplate] = []
 
@@ -90,7 +103,7 @@ class BaseTemplateBuilder(
         # Add obj to children
         children.append(obj)
 
-        tree: OrderedDict[str, domain.TTemplateGroup | domain.TTemplate] = {}
+        tree: OrderedDict[str, domain.TTemplateGroup | domain.TTemplate] = OrderedDict()
 
         for child in children:
             tree[child.name] = child
@@ -106,7 +119,7 @@ class BaseTemplateBuilder(
         groups: list[domain.TTemplateGroup] = self._get_tree(self._group)
 
         # Templates
-        templates: dict[str, domain.TTemplate] = {}
+        templates: OrderedDict[str, domain.TTemplate] = OrderedDict()
 
         # Items
 
