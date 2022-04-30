@@ -18,13 +18,24 @@ from collections.abc import Coroutine
 
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
-
+import string
 
 TAnnotation = TypeVar("TAnnotation")
 TType = TypeVar("TType", bound=Type)
 TParams = ParamSpec("TParams")
 TReturnType = TypeVar("TReturnType")
 TActionConfig = TypeVar("TActionConfig", bound="ActionConfig")
+
+# String
+
+
+def get_placeholders_from_str(value: str) -> list[str]:
+
+    placeholder_names = [
+        name for text, name, spec, conv in string.Formatter().parse(value)
+    ]
+
+    return placeholder_names
 
 
 # Callables

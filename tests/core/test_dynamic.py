@@ -7,6 +7,19 @@ import inspect
 from collections import OrderedDict
 from makefun import wraps
 
+# String
+def test_get_placeholders_from_str():
+
+    value = "{hello} I am a {placeholder}"
+
+    placeholders = dynamic.get_placeholders_from_str(value)
+
+    assert placeholders == [
+        "hello",
+        "placeholder",
+    ], "get_placeholders_from_str does not find all placeholders"
+
+
 # Callables
 async def test_make_async():
     def sync_func(param: str) -> str:
