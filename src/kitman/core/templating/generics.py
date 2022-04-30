@@ -200,23 +200,32 @@ class BaseTemplateBuilder(
 
         return categories
 
-    @overload
-    def resolve_variables(
-        structure: domain.TTemplateStructure, item: domain.TTemplateItem
-    ) -> domain.TTemplateItem:
-        ...
-
-    @overload
-    def resolve_variables(
-        structure: domain.TTemplateStructure, item: domain.TTemplateVariable
-    ) -> domain.TTemplateVariable:
-        ...
-
     def resolve_variable_values(
         variables: OrderedDict[str, domain.TTemplateVariable]
-    ) -> domain.TTemplateItem | domain.TTemplateVariable:
+    ) -> OrderedDict[str, domain.TTemplateVariable]:
 
-        pass
+        # If no variables has nested variables in value, return quickly
+        if not any([variable.depends_on for variable in variables.values()]):
+            return variables
+
+        required_variables: OrderedDict[str, domain.TTemplateVariable] = OrderedDict()
+        optional_variables: OrderedDict[str, domain.TTemplateVariable] = OrderedDict()
+
+        for variable in variables.values():
+
+            if variable.required:
+                required_variables[variable.name] = variable
+            else:
+                optional_variables[variable.name] = variable
+
+        resolved_variables: OrderedDict[str, domain.TTemplateVariable] = OrderedDict()
+
+        for root_variable in filter(
+            lambda variable: not variable.depends_on, variables.values()
+        ):
+            resolved_variables[root_variable.name] = root_variable
+
+        return resolved_variables
 
     # Public methods
     def set_group(self, group: domain.TTemplateGroup) -> Self:
