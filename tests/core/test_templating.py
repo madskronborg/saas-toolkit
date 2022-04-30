@@ -7,6 +7,8 @@ from kitman.core.templating import (
     TemplateStructure,
 )
 
+from deepdiff import DeepDiff
+
 # Data
 template_child = Template(
     name="child",
@@ -55,7 +57,16 @@ template = Template(
 template_standalone = Template(
     name="standalone",
     category="networking",
-    items=[TemplateItem(value={"name": "2.test.com", "content": "{domain}"})],
+    items=[
+        TemplateItem(
+            name="Item 2",
+            value={
+                "name": "2.{domain}",
+                "content": "{domain}",
+            },
+        ),
+        TemplateItem(value={"name": "2.test.com", "content": "{domain}"}),
+    ],
 )
 
 template_group = TemplateGroup(
@@ -65,13 +76,65 @@ template_group = TemplateGroup(
 )
 
 
+def test_get_item_index():
+
+    builder = TemplateBuilder()
+
+    index = builder._get_item_index(
+        template_child.items,
+        template_standalone.items[0],
+        search_keys={
+            "name",
+        },
+    )
+
+    assert index == 0, "_get_item_index could not find item"
+
+
 def test_get_tree():
 
     builder = TemplateBuilder()
 
-    tree = builder._get_tree(template)
+    template_tree = builder._get_tree(template)
 
-    assert tree == [
+    assert template_tree == [
         template_child,
         template,
     ], "get_tree does not return correct tree for templates"
+
+    group_tree = builder._get_tree(template_group)
+
+    assert group_tree == [
+        template_group
+    ], "get_tree does rteturn correct tree for groups"
+
+
+def test_get_structure():
+
+    builder = TemplateBuilder()
+
+    builder.set_group(template_group)
+    builder.add_user_template(template_standalone)
+
+    structure = builder._get_structure()
+
+    assert structure.templates == [
+        template_child,
+        template,
+        template_standalone,
+    ], "TemplateStructure templates are not correct"
+
+    from pprint import pprint
+
+    for item in structure.items:
+        print("Item:", item.name, "Is:", pprint(item))
+
+    expected_items: list[TemplateItem] = []
+
+    expected_items.extend(template_child.items[1:])
+
+    expected_items.extend(template.items)
+
+    expected_items.extend(template_standalone.items)
+
+    assert structure.items == expected_items, "TemplateStructure items are not correct"

@@ -39,17 +39,19 @@ class BaseTemplateBuilder(
         for search_key in search_keys:
             search_params[search_key] = item.value[search_key]
 
-        index: int | None = next(
-            (
-                index
-                for index, search_item in enumerate(search_items)
-                if search_item.dict(include={"value": search_keys})["value"]
-                == search_params
-            ),
-            None,
-        )
+        index: int | None = None
 
-        if index and index >= 0:
+        for search_index, search_item in enumerate(search_items):
+
+            search_item_value = search_item.dict(include={"value": search_keys})[
+                "value"
+            ]
+
+            if search_item_value == search_params:
+                index = search_index
+                break
+
+        if isinstance(index, int):
             return index
 
         return None
@@ -80,19 +82,19 @@ class BaseTemplateBuilder(
         str, domain.TTemplateGroup | domain.TTemplate
     ]:
         """
-        _get_tree
+        _get_tree.
 
         Get a tree of all children and the object itself.
         The tree will be in reverse order -> last child is first, obj is last
 
-        Args:
+        Args
             obj (domain.TTemplateGroup | domain.TTemplate): _description_
             return_dict (bool, optional): _description_. Defaults to False.
 
-        Returns:
+        Returns
             list[domain.TTemplateGroup | domain.TTemplate] | OrderedDict[ str, domain.TTemplateGroup | domain.TTemplate ]: _description_
-        """
 
+        """
         children: list[domain.TTemplateGroup | domain.TTemplate] = []
 
         if obj.children:
@@ -121,47 +123,60 @@ class BaseTemplateBuilder(
         # Templates
         templates: OrderedDict[str, domain.TTemplate] = OrderedDict()
 
-        # Items
-
-        # Variables
-
-        items: list[domain.TTemplateItem] = []
-
-        variables: dict[str, domain.TTemplateVariable] = {}
+        # Temporary store for group templates
+        _group_templates: OrderedDict[str, domain.TTemplate] = OrderedDict()
 
         for group in groups:
 
-            template: domain.TTemplate
-            for template in group.templates:
+            group_template: domain.TTemplate
+            for group_template in group.templates:
+                _group_templates[group_template.name] = group_template
+
+        if _group_templates:
+            for group_template in _group_templates.values():
+
+                for template in self._get_tree(group_template):
+                    templates[template.name] = template
+
+        if self._user_templates:
+            for template in self._user_templates.values():
                 templates[template.name] = template
 
-        for template in chain(group.templates, self._user_templates):
+        # Items
+        items: list[domain.TTemplateItem] = []
 
-            templates[template.name] = template
-
-            unique_keys = template.unique_keys
+        for template in templates.values():
 
             for item in template.items:
                 item_index: int | None = None
 
-                if unique_keys:
+                if template.unique_keys:
                     # Check if items is already added - if it is, we have to replace it
-                    item_index = self._get_item_index(items, item, unique_keys)
+                    item_index = self._get_item_index(items, item, template.unique_keys)
 
                 if item_index:
                     items[item_index] = item
                 else:
                     items.append(item)
 
-            for variable in template.variables:
+        # Variables
+        variables: OrderedDict[str, domain.TTemplateVariable] = OrderedDict()
 
-                variables[variable.name] = variable
+        for template in templates.values():
+            template_variable: domain.TTemplateVariable
+            for template_variable in template.variables:
+                variables[template_variable.name] = template_variable
 
-        for group_variable in group.variables:
-            variables[group_variable.name] = group_variable
+        for group in groups:
 
-        for user_variable in self._user_variables.values():
-            variables[user_variable.name] = user_variable
+            group_variable: domain.TTemplateVariable
+            for group_variable in group.variables:
+                variables[group_variable.name] = group_variable
+
+        if self._user_variables:
+            user_variable: domain.TTemplateVariable
+            for user_variable in self._user_variables.values():
+                variables[user_variable.name] = user_variable
 
         template_list = [t for t in templates.values()]
         variable_list = [v for v in variables.values()]
@@ -179,10 +194,29 @@ class BaseTemplateBuilder(
 
         categories: set[str] = set()
 
+        template: domain.TTemplate
         for template in structure.templates:
             categories.add(template.category)
 
         return categories
+
+    @overload
+    def resolve_variables(
+        structure: domain.TTemplateStructure, item: domain.TTemplateItem
+    ) -> domain.TTemplateItem:
+        ...
+
+    @overload
+    def resolve_variables(
+        structure: domain.TTemplateStructure, item: domain.TTemplateVariable
+    ) -> domain.TTemplateVariable:
+        ...
+
+    def resolve_variable_values(
+        variables: OrderedDict[str, domain.TTemplateVariable]
+    ) -> domain.TTemplateItem | domain.TTemplateVariable:
+
+        pass
 
     # Public methods
     def set_group(self, group: domain.TTemplateGroup) -> Self:

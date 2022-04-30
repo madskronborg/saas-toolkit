@@ -21,13 +21,9 @@ class TemplateGroup(
     pass
 
 
-class TemplateStructureItem(
-    domain.BaseTemplateStructureItem[Template, TemplateItem, TemplateVariable]
+class TemplateStructure(
+    domain.BaseTemplateStructure[Template, TemplateItem, TemplateVariable]
 ):
-    pass
-
-
-class TemplateStructure(domain.BaseTemplateStructure[TemplateStructureItem]):
     pass
 
 
