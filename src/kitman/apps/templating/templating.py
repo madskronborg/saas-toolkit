@@ -27,7 +27,7 @@ class TemplateStructure(
     pass
 
 
-class TemplateBuild(domain.BaseTemplateBuild[list[dict], TemplateStructure]):
+class TemplateBuild(domain.BaseTemplateBuild[TemplateItem, TemplateStructure]):
     pass
 
 

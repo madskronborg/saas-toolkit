@@ -230,10 +230,22 @@ class BaseTemplateBuilder(
 
         return self
 
-    def build(self, group_by_category: bool = True) -> domain.TTemplateBuild:
+    def build(self) -> domain.TTemplateBuild:
 
         structure = self._get_structure()
         dependency_resolver = self._get_dependency_resolver(structure)
 
-        build_data = None
-        return parse_obj_as(self.Config.template_build_model, build_data)
+        data: list[domain.TTemplateItem] = []
+
+        items: list[domain.TTemplateItem] = structure.items
+
+        for item in items:
+
+            resolved_item = dependency_resolver.resolve(item)
+            data.append(resolved_item)
+
+        template_build = self.Config.template_build_model(
+            data=data, structure=structure
+        )
+
+        return template_build

@@ -32,7 +32,7 @@ TActionConfig = TypeVar("TActionConfig", bound="ActionConfig")
 def get_placeholders_from_str(value: str) -> list[str]:
 
     placeholder_names = [
-        name for text, name, spec, conv in string.Formatter().parse(value)
+        name for text, name, spec, conv in string.Formatter().parse(value) if name
     ]
 
     return placeholder_names

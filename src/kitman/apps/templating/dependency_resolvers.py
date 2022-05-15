@@ -168,9 +168,11 @@ class TemplateDependencyResolver(
         if not item.depends_on:
             return True
 
-        unknown_variables: list[str] = filter(
-            lambda dependency_name: not dependency_name in self.resolved_variables,
-            item.depends_on,
+        unknown_variables: list[str] = list(
+            filter(
+                lambda dependency_name: not dependency_name in self.resolved_variables,
+                item.depends_on,
+            )
         )
 
         if not unknown_variables:
@@ -198,9 +200,9 @@ class TemplateDependencyResolver(
 
         item_dict = item.dict()
 
-        resolved_value: dict = {}
+        result: dict = {}
 
-        for key, val in item_dict["value"]:
+        for key, val in item_dict["value"].items():
 
             key_dependency_names: list[str] = []
             val_dependency_names: list[str] = []
@@ -235,8 +237,8 @@ class TemplateDependencyResolver(
             if val_dependencies:
                 resolved_value = val.format(**val_dependencies)
 
-            resolved_value[resolved_key] = resolved_value
+            result[resolved_key] = resolved_value
 
-        item_dict["value"] = resolved_value
+        item_dict["value"] = result
 
         return item.__class__(**item_dict)

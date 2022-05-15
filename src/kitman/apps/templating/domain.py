@@ -5,16 +5,14 @@ from pydantic.generics import GenericModel
 
 from kitman.core import dynamic
 
+import orjson
+
 TTemplateVariable = TypeVar("TTemplateVariable", bound="BaseTemplateVariable")
 TTemplateItem = TypeVar("TTemplateItem", bound="BaseTemplateItem")
 TTemplate = TypeVar("TTemplate", bound="BaseTemplate")
 TTemplateGroup = TypeVar("TTemplateGroup", bound="BaseTemplateGroup")
-TTemplateStructureItem = TypeVar(
-    "TTemplateStructureItem", bound="BaseTemplateStructureItem"
-)
 TTemplateStructure = TypeVar("TTemplateStructure", bound="BaseTemplateStructure")
 TTemplateBuild = TypeVar("TTemplateBuild", bound="BaseTemplateBuild")
-TTemplateBuildData = TypeVar("TTemplateBuildData", bound=list)
 
 # Simple types for self-reference
 
@@ -28,8 +26,8 @@ class BaseTemplateVariable(BaseModel):
     template: str | int | None = None
     group: str | int | None = None
 
-    @validator("depends_on", pre=True)
-    def validate_depends_on(cls, value: set[str] | None, values: dict, **kwargs):
+    @validator("depends_on", pre=True, always=True)
+    def validate_depends_on(cls, v: set[str] | None, values: dict, **kwargs):
 
         depends_on = set()
 
@@ -54,26 +52,28 @@ class BaseTemplateItem(GenericModel, Generic[TTemplate]):
     depends_on: set[str] | None = None
     template: str | int | None = None
 
-    @validator("depends_on", pre=True)
-    def validate_depends_on(cls, value: set[str] | None, values: dict, **kwargs):
+    @validator("depends_on", pre=True, always=True)
+    def validate_depends_on(cls, v: set[str] | None, values: dict, **kwargs):
 
         depends_on = set()
 
-        item_value = values["value"]
+        item_value: dict = values["value"]
 
         if item_value:
-            for key, val in item_value:
+            for key, val in item_value.items():
 
                 if isinstance(key, str):
                     key_placeholders = dynamic.get_placeholders_from_str(key)
 
                     for key_placeholder in key_placeholders:
+                        print("Key variable is:", key_placeholder)
                         depends_on.add(key_placeholder)
 
                 if isinstance(val, str):
                     val_placeholders = dynamic.get_placeholders_from_str(val)
 
                     for val_placeholder in val_placeholders:
+                        print("Value variable is:", val_placeholder)
                         depends_on.add(val_placeholder)
 
         return depends_on
@@ -143,10 +143,30 @@ class BaseTemplateStructure(
     variables: list[TTemplateVariable]
 
 
-class BaseTemplateBuild(Generic[TTemplateBuildData, TTemplateStructure]):
+class BaseTemplateBuild(Generic[TTemplateItem, TTemplateStructure]):
 
-    data: TTemplateBuildData
+    data: list[TTemplateItem]
     structure: TTemplateStructure
+
+    def __init__(self, data: list[TTemplateItem], structure: TTemplateStructure):
+
+        self.data = data
+        self.structure = structure
+
+    def json(self, *args, **kwargs) -> str:
+
+        prepared_data = self.dict(*args, **kwargs)
+
+        return orjson.dumps(prepared_data).decode()
+
+    def dict(self, *args, **kwargs) -> list[dict]:
+
+        prepared_data: list[dict] = []
+
+        for item in self.data:
+            prepared_data.append(item.dict(*args, **kwargs))
+
+        return prepared_data
 
     def inspect(self) -> dict:
         """
@@ -161,9 +181,9 @@ class BaseTemplateBuild(Generic[TTemplateBuildData, TTemplateStructure]):
         """
         pass
 
-    def merge(self, other: TTemplateBuildData) -> TTemplateBuildData:
+    def merge(self, other: list[TTemplateItem]) -> list[TTemplateItem]:
 
         pass
 
-    def get_difference(self, other: TTemplateBuildData) -> dict:
+    def get_difference(self, other: list[TTemplateItem]) -> dict:
         pass
