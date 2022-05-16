@@ -92,7 +92,7 @@ class TodoExtension(sdk.AsyncClientExtension):
         return response
 
 
-class TodoClient(sdk.AsyncClient):
+class TodoClient(sdk.AsyncHTTPClient):
 
     todos: TodoExtension
 

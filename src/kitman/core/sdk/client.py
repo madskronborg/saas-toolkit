@@ -3,7 +3,6 @@ from typing import Generic, Optional, TypeVar, Union, get_type_hints
 from typing_extensions import Self
 
 
-from httpx import AsyncClient, Client as HTTPXClient
 from httpx import AsyncClient as HTTPXAsyncClient
 from pydantic import BaseModel
 
@@ -44,10 +43,10 @@ class BaseClient(Generic[TClient, TClientExtension]):
 
         extension.parent = self
 
-        if isinstance(self, (AsyncClient)):
-            setattr(extension, "client", self)
-        else:
+        if isinstance(self, (AsyncClientExtension)):
             setattr(extension, "client", self.client)
+        else:
+            setattr(extension, "client", self)
 
     def _connect_extensions(self) -> None:
 
@@ -66,7 +65,9 @@ class AsyncClientExtension(BaseClient["AsyncClient", "AsyncClientExtension"]):
     pass
 
 
-class AsyncClient(BaseClient["AsyncClient", "AsyncClientExtension"], HTTPXAsyncClient):
+class AsyncHTTPClient(
+    BaseClient["AsyncClient", "AsyncClientExtension"], HTTPXAsyncClient
+):
     def __new__(cls: type[Self]) -> Self:
         klass = super().__new__(cls)
 

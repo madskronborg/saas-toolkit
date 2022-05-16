@@ -74,7 +74,19 @@ def test_get_structure():
 
     expected_items.extend(template_standalone.items)
 
-    assert structure.items == expected_items, "TemplateStructure items are not correct"
+    if not structure.items == expected_items:
+
+        print("Differences is:")
+        pprint(
+            DeepDiff(
+                structure.items,
+                expected_items,
+            )
+        )
+
+        assert (
+            structure.items == expected_items
+        ), "TemplateStructure items are not correct"
 
 
 def test_build():
