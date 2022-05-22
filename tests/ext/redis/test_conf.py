@@ -1,5 +1,5 @@
 import pytest
-from kitman.ext import redis
+from kitman.plugins import redis
 from kitman.core import dynamic
 
 

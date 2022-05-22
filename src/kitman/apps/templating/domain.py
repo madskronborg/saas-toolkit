@@ -20,6 +20,7 @@ TTemplateBuild = TypeVar("TTemplateBuild", bound="BaseTemplateBuild")
 class BaseTemplateVariable(BaseModel):
 
     name: str | int
+    description: str | None = None
     value: str | int | None = None
     required: bool = False
     depends_on: set[str] | None = None
@@ -48,6 +49,7 @@ class BaseTemplateVariable(BaseModel):
 class BaseTemplateItem(GenericModel, Generic[TTemplate]):
 
     name: str | int | None = None
+    description: str | None = None
     value: dict
     depends_on: set[str] | None = None
     template: str | int | None = None
@@ -82,6 +84,7 @@ class BaseTemplateItem(GenericModel, Generic[TTemplate]):
 class BaseTemplate(GenericModel, Generic[TTemplate, TTemplateItem, TTemplateVariable]):
 
     name: str | int
+    description: str | None = None
     category: str = "default"
     items: list[TTemplateItem] = []
     variables: list[TTemplateVariable] = []
@@ -112,6 +115,7 @@ class BaseTemplateGroup(
 ):
 
     name: str | int
+    description: str | None = None
     templates: list[TTemplate]
     variables: list[TTemplateVariable] = []
     children: List[TTemplateGroup] = []
