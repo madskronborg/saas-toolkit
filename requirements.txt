@@ -1,4 +1,4 @@
-pydantic[orjson]
+pydantic[orjson,email]
 ormar[postgresql,sqlite,orjson,crypto,mysql]
 sqlalchemy
 fastapi
