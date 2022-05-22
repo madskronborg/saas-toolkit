@@ -1,8 +1,10 @@
 import datetime
 from typing import TYPE_CHECKING
+from typing_extensions import Self
 import uuid
 import ormar
 from ormar.models import T
+from ormar.relations.querysetproxy import QuerysetProxy
 
 from kitman import errors
 
@@ -77,3 +79,19 @@ class OrderableMixin:
         orders_by = ["order"]
 
     order: int = ormar.SmallInteger(default=1)
+
+
+class TreeMixin:
+
+    parent: Self | None
+
+    async def get_descendants(self) -> list[Self]:
+
+        await self.parent.load()
+
+    async def get_ascendants(self) -> list[Self]:
+
+        pass
+
+    async def get_tree(self) -> list[Self]:
+        pass

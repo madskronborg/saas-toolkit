@@ -1,4 +1,5 @@
 from kitman.db.models import BaseModel, BaseMeta, ormar
+from kitman.db.models import TreeMixin
 from typing import TypeVar
 from ormar.relations.querysetproxy import QuerysetProxy
 
@@ -66,7 +67,7 @@ class BaseTemplateThroughTemplateItem(BaseModel):
     )
 
 
-class BaseTemplate(BaseModel):
+class BaseTemplate(BaseModel, TreeMixin):
     class Meta(BaseMeta):
         abstract = True
 
@@ -91,9 +92,6 @@ class BaseTemplate(BaseModel):
     )
 
     unique_keys: list[str] = ormar.JSON(default=list)
-    parent: Template | None = ormar.ForeignKey(
-        Template, nullable=True, ondelete="SET NULL"
-    )
 
 
 class BaseTemplateGroupThroughTemplate(BaseModel):
