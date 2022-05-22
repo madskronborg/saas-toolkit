@@ -43,10 +43,10 @@ Implements `orders_by` which is set to `["order"]`
 ```py
 
 import ormar
-from kitman.db import models
+from kitman.db import models, mixins
 
-class MyOrderableModel(models.BaseModel, models.OrderableMixin):
+class MyOrderableModel(models.BaseModel, mixins.OrderableMixin):
 
-    class Meta(models.BaseMeta, models.OrderableMixin.MetaOptions):
+    class Meta(models.BaseMeta, mixins.OrderableMixin.MetaOptions):
         pass
 ```

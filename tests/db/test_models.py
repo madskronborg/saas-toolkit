@@ -5,7 +5,7 @@ from fastapi import FastAPI
 import ormar
 import pytest
 
-from kitman.db import models
+from kitman.db import models, mixins
 from kitman import errors
 
 
@@ -14,8 +14,8 @@ class MyModel(models.BaseModel):
         pass
 
 
-class MyOrderableModel(models.BaseModel, models.OrderableMixin):
-    class Meta(models.BaseMeta, models.OrderableMixin.MetaOptions):
+class MyOrderableModel(models.BaseModel, mixins.OrderableMixin):
+    class Meta(models.BaseMeta, mixins.OrderableMixin.MetaOptions):
         pass
 
 

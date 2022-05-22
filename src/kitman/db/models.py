@@ -71,27 +71,3 @@ class BaseModel(ormar.Model):
         self.updated = datetime.datetime.now()
 
         return await super().update(**kwargs)
-
-
-class OrderableMixin:
-    class MetaOptions:
-
-        orders_by = ["order"]
-
-    order: int = ormar.SmallInteger(default=1)
-
-
-class TreeMixin:
-
-    parent: Self | None
-
-    async def get_descendants(self) -> list[Self]:
-
-        await self.parent.load()
-
-    async def get_ascendants(self) -> list[Self]:
-
-        pass
-
-    async def get_tree(self) -> list[Self]:
-        pass
