@@ -1,9 +1,9 @@
-from kitman.conf import SETTINGS
+from kitman.conf import settings
 from kitman import errors
 
 from . import errors
 
-if not SETTINGS:
+if not settings:
     raise errors.ConfigurationError("Settings have not been configured")
 
 # Exports

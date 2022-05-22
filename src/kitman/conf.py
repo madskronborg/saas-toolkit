@@ -6,6 +6,9 @@ from .logging import logger
 from deepmerge import always_merger
 from kitman import errors
 
+# App Settings
+from kitman.apps.templating.apps import TemplatingAppConfig
+
 
 class BaseSettings(BaseModel):
     class Config:
@@ -23,13 +26,19 @@ class LoggingSettings(BaseSettings):
     enable: bool = False
 
 
+class AppSettings(BaseSettings):
+
+    templating: TemplatingAppConfig | None = None
+
+
 class Settings(BaseSettings):
 
     sql: SQLSettings = SQLSettings()
     logging: LoggingSettings = LoggingSettings()
+    apps: AppSettings = AppSettings()
 
 
-SETTINGS: Settings = Settings()
+settings: Settings = Settings()
 
 
 def configure(user_settings: Settings | dict, partial: bool = False) -> None:
@@ -47,19 +56,19 @@ def configure(user_settings: Settings | dict, partial: bool = False) -> None:
     if partial:
 
         if isinstance(user_settings, dict):
-            new_settings = always_merger.merge(SETTINGS.dict(), user_settings)
+            new_settings = always_merger.merge(settings.dict(), user_settings)
         else:
-            new_settings = always_merger.merge(SETTINGS.dict(), user_settings.dict())
+            new_settings = always_merger.merge(settings.dict(), user_settings.dict())
 
     if new_settings == None:
         raise ValueError("new_settings are not set!")
 
     for key, value in new_settings.items():
 
-        setattr(SETTINGS, key, value)
+        setattr(settings, key, value)
 
     # Logging
-    if SETTINGS.logging.enable:
+    if settings.logging.enable:
         logger.enable("kitman")
     else:
         logger.disable("kitman")

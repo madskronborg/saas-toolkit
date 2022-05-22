@@ -6,7 +6,7 @@ from ormar.models import T
 
 from kitman import errors
 
-from kitman.conf import SETTINGS
+from kitman.conf import settings
 
 # Queryset
 
@@ -26,8 +26,8 @@ class BaseQueryset(ormar.QuerySet[T]):
 
 
 class BaseMeta(ormar.ModelMeta):
-    metadata = SETTINGS.sql.metadata
-    database = SETTINGS.sql.database
+    metadata = settings.sql.metadata
+    database = settings.sql.database
     queryset_class = BaseQueryset
 
 

@@ -1,16 +1,30 @@
 from kitman.db.models import BaseModel, BaseMeta, ormar
-from typing import TYPE_CHECKING, ForwardRef, TypeVar
+from typing import TypeVar
 from ormar.relations.querysetproxy import QuerysetProxy
+
+from kitman.conf import settings
 
 ## Types
 TTemplateVariable = TypeVar("TTemplateVariable", bound="BaseTemplateVariable")
 TTemplateItem = TypeVar("TTemplateItem", bound="BaseTemplateItem")
 
-## Refs
-TemplateVariableRef = ForwardRef("TemplateVariable")
-TemplateItemRef = ForwardRef("TemplateItemRef")
-TemplateRef = ForwardRef("Template")
-TemplateGroupRef = ForwardRef("TemplateGroup")
+## User Models
+TemplateVariable = settings.apps.templating.models.template_variable.model
+TemplateItem = settings.apps.templating.models.template_item.model
+Template = settings.apps.templating.models.template.model
+TemplateGroup = settings.apps.templating.models.template_group.model
+TemplateThroughTemplateVariable = (
+    settings.apps.templating.models.template_through_template_variable.model
+)
+TemplateThroughTemplateItem = (
+    settings.apps.templating.models.template_through_template_item.model
+)
+TemplateGroupThroughTemplate = (
+    settings.apps.templating.models.template_group_through_template.model
+)
+TemplateGroupThroughTemplateVariable = (
+    settings.apps.templating.models.template_through_template_variable.model
+)
 
 
 class BaseTemplateVariable(BaseModel):
@@ -32,6 +46,26 @@ class BaseTemplateItem(BaseModel):
     value: dict = ormar.JSON()
 
 
+class BaseTemplateThroughTemplateVariable(BaseModel):
+    class Meta(BaseMeta):
+        abstract = True
+
+    template: Template = ormar.ForeignKey(Template, ondelete="CASCADE")
+    template_variable: TemplateVariable = ormar.ForeignKey(
+        TemplateVariable, ondelete="CASCADE"
+    )
+
+
+class BaseTemplateThroughTemplateItem(BaseModel):
+    class Meta(BaseMeta):
+        abstract = True
+
+    template: Template = ormar.ForeignKey(Template, ondelete="CASCADE")
+    template_item: TemplateVariable = ormar.ForeignKey(
+        TemplateVariable, ondelete="CASCADE"
+    )
+
+
 class BaseTemplate(BaseModel):
     class Meta(BaseMeta):
         abstract = True
@@ -40,14 +74,49 @@ class BaseTemplate(BaseModel):
     description: str = ormar.Text(nullable=True)
     category: str = ormar.String(max_length=255)
     items: list[BaseTemplateItem] | QuerysetProxy[BaseTemplateItem] = ormar.ManyToMany(
-        TemplateItemRef, related_name="templates"
+        TemplateItem,
+        through=TemplateThroughTemplateItem,
+        related_name="templates",
+        through_relation_name="template",
+        through_reverse_relation_name="template_item",
     )
     variables: list[BaseTemplateVariable] | QuerysetProxy[
         BaseTemplateVariable
-    ] = ormar.ManyToMany(TemplateVariableRef, related_name="templates")
+    ] = ormar.ManyToMany(
+        TemplateVariable,
+        through=TemplateThroughTemplateVariable,
+        related_name="templates",
+        through_relation_name="template",
+        through_reverse_relation_name="template_variable",
+    )
+
     unique_keys: list[str] = ormar.JSON(default=list)
-    parent: TemplateRef | None = ormar.ForeignKey(
-        TemplateRef, nullable=True, ondelete="SET NULL"
+    parent: Template | None = ormar.ForeignKey(
+        Template, nullable=True, ondelete="SET NULL"
+    )
+
+
+class BaseTemplateGroupThroughTemplate(BaseModel):
+    class Meta(BaseMeta):
+        abstract = True
+
+    template_group: TemplateGroup = ormar.ForeignKey(
+        TemplateGroup,
+        ondelete="CASCADE",
+    )
+    template: Template = ormar.ForeignKey(Template, ondelete="CASCADE")
+
+
+class BaseTemplateGroupThroughTemplateVariable(BaseModel):
+    class Meta(BaseMeta):
+        abstract = True
+
+    template_group: TemplateGroup = ormar.ForeignKey(
+        TemplateGroup,
+        ondelete="CASCADE",
+    )
+    template_variable: TemplateVariable = ormar.ForeignKey(
+        TemplateVariable, ondelete="CASCADE"
     )
 
 
@@ -58,9 +127,19 @@ class BaseTemplateGroup(BaseModel):
     name: str = ormar.String(max_length=255)
     description: str = ormar.Text(nullable=True)
 
-    templates: list[TemplateRef] | QuerysetProxy[TemplateRef] = ormar.ManyToMany(
-        TemplateRef, related_name="groups"
+    templates: list[Template] | QuerysetProxy[Template] = ormar.ManyToMany(
+        Template,
+        through=TemplateGroupThroughTemplate,
+        related_name="groups",
+        through_relation_name="template_group",
+        through_reverse_relation_name="template",
     )
-    variables: list[TemplateVariableRef] | QuerysetProxy[
-        TemplateVariableRef
-    ] = ormar.ManyToMany(TemplateVariableRef, related_name="groups")
+    variables: list[TemplateVariable] | QuerysetProxy[
+        TemplateVariable
+    ] = ormar.ManyToMany(
+        TemplateVariable,
+        through=TemplateGroupThroughTemplateVariable,
+        related_name="groups",
+        through_relation_name="template_group",
+        through_reverse_relation_name="template_variable",
+    )

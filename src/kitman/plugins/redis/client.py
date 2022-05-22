@@ -1,5 +1,5 @@
 import redis.asyncio as redis
-from kitman.conf import SETTINGS
+from kitman.conf import settings
 
 
 class Redis(redis.Redis):

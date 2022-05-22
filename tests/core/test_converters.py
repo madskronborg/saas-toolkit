@@ -1,5 +1,5 @@
 import pytest
-from kitman.conf import SETTINGS
+from kitman.conf import settings
 from kitman.core import converters
 
 

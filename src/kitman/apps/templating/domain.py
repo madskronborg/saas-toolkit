@@ -1,4 +1,4 @@
-from typing import Generic, List, Literal, TypeVar
+from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field, root_validator, validator
 from pydantic.generics import GenericModel
@@ -92,7 +92,7 @@ class BaseTemplate(GenericModel, Generic[TTemplate, TTemplateItem, TTemplateVari
         None,
         description="A list of keys from the items' value dictionary that should be unique in the final build.",
     )
-    children: List[TTemplate] | None = None
+    children: list[TTemplate] | None = None
 
     # Internal context variables
     group: str | int | None = None
@@ -118,7 +118,7 @@ class BaseTemplateGroup(
     description: str | None = None
     templates: list[TTemplate]
     variables: list[TTemplateVariable] = []
-    children: List[TTemplateGroup] = []
+    children: list[TTemplateGroup] = []
 
     # Internal context variables
     extends: TTemplateGroup | None = None

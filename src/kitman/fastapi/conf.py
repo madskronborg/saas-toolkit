@@ -7,7 +7,7 @@ from .database import init_db, start_database, stop_database
 from databases import Database
 from kitman import errors
 from sqlalchemy import MetaData
-from kitman.conf import configure, SETTINGS
+from kitman.conf import configure, settings
 from fastapi.middleware.cors import CORSMiddleware
 from .errors import exception_handler
 from kitman.core.converters import convert_value_to_list
@@ -74,7 +74,7 @@ def setup(
             postgres_url: Optional[PostgresDsn] = user_settings.POSTGRES_URI
 
             if postgres_url:
-                metadata = SETTINGS.sql.metadata or MetaData()
+                metadata = settings.sql.metadata or MetaData()
                 db = databases.Database(postgres_url)
 
                 configure({"sql": {"metadata": metadata, "database": db}}, partial=True)

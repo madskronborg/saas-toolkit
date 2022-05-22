@@ -1,25 +1,38 @@
-from typing import Type
+from typing import ForwardRef, Generic, Type, TypeVar
 from pydantic import BaseModel
 from .services import BaseService
+from pydantic.generics import GenericModel
+
+TModelsConfig = TypeVar("TModelsConfig")
+TServicesConfig = TypeVar("TServicesConfig")
 
 
-class BaseConfig(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
+class BaseConfig:
+    arbitrary_types_allowed = True
 
 
-class BaseModelConfig(BaseConfig):
+class ModelConfig(BaseModel):
+    class Config(BaseConfig):
+        pass
 
-    pass
-
-
-class BaseServiceConfig(BaseConfig):
-
-    pass
+    ref: ForwardRef
+    model: Type
 
 
-class BaseAppConfig(BaseConfig):
+class ServiceConfig(BaseModel):
+    class Config(BaseConfig):
+        pass
+
+
+class SimpleConfig(BaseModel):
+    class Config(BaseConfig):
+        pass
+
+
+class AppConfig(GenericModel, Generic[TModelsConfig, TServicesConfig]):
+    class Config(BaseConfig):
+        pass
 
     name: str
-    models: BaseModelConfig | None = None
-    services: BaseServiceConfig | None = None
+    models: TModelsConfig | None = None
+    services: TServicesConfig | None = None

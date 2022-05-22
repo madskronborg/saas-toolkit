@@ -9,7 +9,7 @@ from kitman.fastapi.conf import (
     setup as fastapi_setup,
 )
 from kitman import errors
-from kitman.conf import SETTINGS
+from kitman.conf import settings
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
 
@@ -123,12 +123,12 @@ def test_setup(app: FastAPI):
     ## Test title is set
     assert app.title == user_settings.PROJECT_NAME, "App title not updated"
 
-    print("Metadata is:", SETTINGS.sql.metadata)
+    print("Metadata is:", settings.sql.metadata)
     ## Test database
     assert isinstance(
-        SETTINGS.sql.metadata, sqlalchemy.MetaData
+        settings.sql.metadata, sqlalchemy.MetaData
     ), "sql metadata not set"
-    assert isinstance(SETTINGS.sql.database, databases.Database), "sql database not set"
+    assert isinstance(settings.sql.database, databases.Database), "sql database not set"
 
     len(app.router.on_startup) == 1, "Database startup function not registered"
     len(app.router.on_shutdown) == 1, "Database shutdown function not registered"
