@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from .services import BaseService
 from pydantic.generics import GenericModel
 
-TModelsConfig = TypeVar("TModelsConfig")
-TServicesConfig = TypeVar("TServicesConfig")
+TModelsConfig = TypeVar("TModelsConfig", bound="BaseConfig")
+TServicesConfig = TypeVar("TServicesConfig", bound="BaseConfig")
 
 
 class BaseConfig:
@@ -34,5 +34,6 @@ class AppConfig(GenericModel, Generic[TModelsConfig, TServicesConfig]):
         pass
 
     name: str
+    namespace: str | None = None
     models: TModelsConfig | None = None
     services: TServicesConfig | None = None

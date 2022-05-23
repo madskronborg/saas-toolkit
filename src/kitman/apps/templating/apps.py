@@ -1,5 +1,9 @@
+from typing import TYPE_CHECKING
 from kitman.core import configs
 from kitman.conf import settings
+
+if TYPE_CHECKING:
+    from .models import 
 
 
 class TemplatingModelsConfig(configs.SimpleConfig):
@@ -21,7 +25,7 @@ class TemplatingServicesConfig(configs.SimpleConfig):
     pass
 
 
-class TemplatingAppConfig(
+class TemplatingConfig(
     configs.AppConfig[TemplatingModelsConfig, TemplatingServicesConfig]
 ):
     pass

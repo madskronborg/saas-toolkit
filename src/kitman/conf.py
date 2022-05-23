@@ -2,12 +2,14 @@ from typing import Optional, Type
 from databases import Database
 from pydantic import BaseModel
 from sqlalchemy import MetaData
+
+from kitman.apps.iam.conf import IAMConfig
 from .logging import logger
 from deepmerge import always_merger
 from kitman import errors
 
 # App Settings
-from kitman.apps.templating.apps import TemplatingAppConfig
+from kitman.apps.templating.apps import TemplatingConfig
 
 
 class BaseSettings(BaseModel):
@@ -28,7 +30,8 @@ class LoggingSettings(BaseSettings):
 
 class AppSettings(BaseSettings):
 
-    templating: TemplatingAppConfig | None = None
+    templating: TemplatingConfig | None = None
+    iam: IAMConfig | None = None
 
 
 class Settings(BaseSettings):
