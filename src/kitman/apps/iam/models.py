@@ -62,7 +62,7 @@ class BaseMembership(BaseModel, Generic[TUserModel, TCustomerModel, TInvitationM
     customer: TCustomerModel = ormar.ForeignKey(
         Customer, related_name=False, ondelete="CASCADE"
     )
-    Invitation: TInvitationModel | None = ormar.ForeignKey(
+    invitation: TInvitationModel | None = ormar.ForeignKey(
         Invitation, related_name=False, nullable=True, ondelete="CASCADE"
     )
 
