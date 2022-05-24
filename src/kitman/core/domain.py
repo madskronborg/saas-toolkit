@@ -1,5 +1,5 @@
 from typing import Protocol, Generic
 
 
-class Interface(Protocol):
+class IService(Protocol):
     pass

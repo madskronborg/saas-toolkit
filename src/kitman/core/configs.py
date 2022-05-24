@@ -1,7 +1,11 @@
-from typing import ForwardRef, Generic, Type, TypeVar
+from typing import TYPE_CHECKING, ForwardRef, Generic, Type, TypeVar
+from fastapi import FastAPI
 from pydantic import BaseModel
 from .services import BaseService
 from pydantic.generics import GenericModel
+
+if TYPE_CHECKING:
+    from kitman.conf import Settings
 
 TModelsConfig = TypeVar("TModelsConfig", bound="BaseConfig")
 TServicesConfig = TypeVar("TServicesConfig", bound="BaseConfig")
@@ -37,3 +41,6 @@ class AppConfig(GenericModel, Generic[TModelsConfig, TServicesConfig]):
     namespace: str | None = None
     models: TModelsConfig | None = None
     services: TServicesConfig | None = None
+
+    def install(app: FastAPI, settings: "Settings") -> FastAPI:
+        return app

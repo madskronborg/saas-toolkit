@@ -6,5 +6,9 @@ class BaseService(sdk.BaseClient):
     pass
 
 
+class BaseHTTPService(sdk.AsyncHTTPClient):
+    pass
+
+
 class BaseServiceExtension(sdk.AsyncClientExtension):
     pass
