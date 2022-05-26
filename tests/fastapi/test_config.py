@@ -102,7 +102,7 @@ def test_setup(app: FastAPI):
     fastapi_setup(app)
 
     assert (
-        errors.Error in app.exception_handlers
+        errors.HTTPError in app.exception_handlers
     ), "Setup did not install exception handler"
 
     class FullSettings(AppSettings, CorsSettings, PostgresSettings):

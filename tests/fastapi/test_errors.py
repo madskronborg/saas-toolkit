@@ -11,7 +11,7 @@ def test_exception_handler(app: FastAPI, client: TestClient):
     @app.route("/", ["get"])
     async def index(request: Request):
 
-        raise errors.Error("Some error")
+        raise errors.HTTPError("Some error")
 
     response = client.get("/")
 

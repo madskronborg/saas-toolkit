@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from kitman import errors
 
 
-async def exception_handler(request: Request, exc: errors.Error) -> JSONResponse:
+async def exception_handler(request: Request, exc: errors.HTTPError) -> JSONResponse:
 
     data = dict(
         status_code=exc.status_code,

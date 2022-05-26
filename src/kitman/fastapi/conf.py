@@ -66,7 +66,7 @@ def setup(
         app.title = user_settings.PROJECT_NAME
 
     # Exception handling
-    app.add_exception_handler(errors.Error, exception_handler)
+    app.add_exception_handler(errors.HTTPError, exception_handler)
 
     # Database
     if user_settings:

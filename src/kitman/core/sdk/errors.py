@@ -1,9 +1,9 @@
 from kitman import errors
 
 
-class InvalidParams(errors.Error):
+class InvalidParams(errors.HTTPError):
     pass
 
 
-class InvalidData(errors.Error):
+class InvalidData(errors.HTTPError):
     pass

@@ -1,6 +1,6 @@
 from kitman import errors
 
 
-class TemplateDependencyError(errors.Error):
+class TemplateDependencyError(errors.HTTPError):
 
     pass

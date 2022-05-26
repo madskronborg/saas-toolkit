@@ -3,21 +3,17 @@ from typing import Generic, TypeVar
 
 from uuid import UUID
 
-from . import errors
-
-TSubject = str | UUID | dict
-TObj = str | UUID
-TRelation = str
-TNamespace = str | None
-
-TCheckResponse = TypeVar("TCheckResponse")
-TGrantResponse = TypeVar("TGrantResponse")
-TRevokeResponse = TypeVar("TRevokeResponse")
-TInspectResponse = TypeVar("TInspectResponse")
+from . import errors, domain
 
 
 class BaseAccessService(
-    Generic[TCheckResponse, TGrantResponse, TRevokeResponse, TInspectResponse]
+    Generic[
+        domain.TSubject,
+        domain.TCheckResponse,
+        domain.TGrantResponse,
+        domain.TRevokeResponse,
+        domain.TInspectResponse,
+    ]
 ):
 
     namespace: str | None = None
@@ -50,38 +46,41 @@ class BaseAccessService(
             status_code=500,
         )
 
+    async def get_subject(self, subject_id: domain.TSubjectId) -> domain.TSubject:
+        pass
+
     async def check(
         self,
-        subject: TSubject,
-        obj: TObj,
-        relation: TRelation,
-        namespace: TNamespace = None,
-    ) -> TCheckResponse:
+        subject_id: domain.TSubjectId,
+        obj: domain.Obj,
+        relation: domain.Relation,
+        namespace: domain.Namespace = None,
+    ) -> domain.TCheckResponse:
         pass
 
     async def grant(
         self,
-        subject: TSubject,
-        obj: TObj,
-        relation: TRelation,
-        namespace: TNamespace = None,
-    ) -> TGrantResponse:
+        subject_id: domain.TSubjectId,
+        obj: domain.Obj,
+        relation: domain.Relation,
+        namespace: domain.Namespace = None,
+    ) -> domain.TGrantResponse:
         pass
 
     async def revoke(
         self,
-        subject: TSubject,
-        obj: TObj,
-        relation: TRelation,
-        namespace: TNamespace = None,
-    ) -> TRevokeResponse:
+        subject_id: domain.TSubjectId,
+        obj: domain.Obj,
+        relation: domain.Relation,
+        namespace: domain.Namespace = None,
+    ) -> domain.TRevokeResponse:
         pass
 
     async def inspect(
         self,
-        subject: TSubject,
-        obj: TObj,
-        relation: TRelation,
-        namespace: TNamespace = None,
-    ) -> TInspectResponse:
+        subject_id: domain.TSubjectId,
+        obj: domain.Obj,
+        relation: domain.Relation,
+        namespace: domain.Namespace = None,
+    ) -> domain.TInspectResponse:
         pass

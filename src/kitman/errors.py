@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class Error(Exception):
+class HTTPError(Exception):
 
     message: str | int | dict | list
     code: Optional[int] = None
@@ -25,11 +25,11 @@ class Error(Exception):
             self.status_code = status_code
 
 
-class ConfigurationError(Error):
+class ConfigurationError(HTTPError):
     pass
 
 
-class NotFound(Error):
+class NotFound(HTTPError):
     """
     NotFound.
 

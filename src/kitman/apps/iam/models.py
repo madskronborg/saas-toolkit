@@ -1,9 +1,8 @@
-import datetime
 from typing import TYPE_CHECKING, Generic
-from ordered_set import TypeVar
+from typing import TypeVar
 from pydantic import EmailStr
 from kitman.db.models import BaseModel, BaseMeta, ormar, QuerysetProxy
-
+from . import domain
 from kitman.conf import settings
 
 ## Types
@@ -18,7 +17,7 @@ Membership = settings.apps.iam.models.membership.model
 Invitation = settings.apps.iam.models.invitation.model
 
 
-class BaseUser(BaseModel, Generic[TCustomerModel, TMembershipModel]):
+class BaseUser(domain.IUser, BaseModel, Generic[TCustomerModel, TMembershipModel]):
     class Meta(BaseMeta):
         abstract = True
 
@@ -31,9 +30,11 @@ class BaseUser(BaseModel, Generic[TCustomerModel, TMembershipModel]):
     )
     first_name: str = ormar.String(max_length=255, default=str)
     last_name: str = ormar.String(max_length=255, default=str)
+    is_active: bool = ormar.Boolean(default=False)
+    is_verified: bool = ormar.Boolean(default=False)
+    is_superuser: bool = ormar.Boolean(default=False)
 
     if TYPE_CHECKING:
-        ownerships: list[TCustomerModel] | QuerysetProxy[TCustomerModel]
         memberships: list[TMembershipModel] | QuerysetProxy[TMembershipModel]
 
 
@@ -65,6 +66,7 @@ class BaseMembership(BaseModel, Generic[TUserModel, TCustomerModel, TInvitationM
     invitation: TInvitationModel | None = ormar.ForeignKey(
         Invitation, related_name=False, nullable=True, ondelete="CASCADE"
     )
+    is_owner: bool = ormar.Boolean(default=False)
 
 
 class BaseCustomer(BaseModel, Generic[TMembershipModel]):
@@ -72,8 +74,6 @@ class BaseCustomer(BaseModel, Generic[TMembershipModel]):
         abstract = True
 
     name: str = ormar.String(max_length=255)
-
-    owner: User = ormar.ForeignKey(User, related_name="ownerships")
 
     members: list[TMembershipModel] | QuerysetProxy[
         TMembershipModel

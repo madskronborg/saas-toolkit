@@ -7,8 +7,9 @@ from pydantic.generics import GenericModel
 if TYPE_CHECKING:
     from kitman.conf import Settings
 
-TModelsConfig = TypeVar("TModelsConfig", bound="BaseConfig")
-TServicesConfig = TypeVar("TServicesConfig", bound="BaseConfig")
+TModelsConfig = TypeVar("TModelsConfig", bound="BaseModel")
+TServicesConfig = TypeVar("TServicesConfig", bound="BaseModel")
+TDependenciesConfig = TypeVar("TDependenciesConfig", bound="BaseModel")
 
 
 class BaseConfig:
@@ -28,12 +29,19 @@ class ServiceConfig(BaseModel):
         pass
 
 
+class DependencyConfig(BaseModel):
+    class Config(BaseConfig):
+        pass
+
+
 class SimpleConfig(BaseModel):
     class Config(BaseConfig):
         pass
 
 
-class AppConfig(GenericModel, Generic[TModelsConfig, TServicesConfig]):
+class AppConfig(
+    GenericModel, Generic[TModelsConfig, TServicesConfig, TDependenciesConfig]
+):
     class Config(BaseConfig):
         pass
 
@@ -41,6 +49,7 @@ class AppConfig(GenericModel, Generic[TModelsConfig, TServicesConfig]):
     namespace: str | None = None
     models: TModelsConfig | None = None
     services: TServicesConfig | None = None
+    dependencies: TDependenciesConfig | None = None
 
     def install(app: FastAPI, settings: "Settings") -> FastAPI:
         return app
