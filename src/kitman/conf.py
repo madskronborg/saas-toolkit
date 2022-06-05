@@ -1,5 +1,6 @@
 from typing import Optional, Type
 from databases import Database
+from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import MetaData
 
@@ -36,6 +37,7 @@ class AppSettings(BaseSettings):
 
 class Settings(BaseSettings):
 
+    base_dir: Path
     sql: SQLSettings = SQLSettings()
     logging: LoggingSettings = LoggingSettings()
     apps: AppSettings = AppSettings()
