@@ -1,4 +1,4 @@
-from kitman.apps.templating import (
+from kitman.kits.templating import (
     TemplateGroup,
     Template,
     TemplateItem,

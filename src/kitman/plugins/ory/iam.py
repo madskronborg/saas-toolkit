@@ -2,13 +2,13 @@ from typing import Generic
 from uuid import UUID
 from fastapi import Request
 from fastapi.security.base import SecurityBase
-from kitman.apps.iam.auth.auth import AuthenticationBackend
+from kitman.kits.iam.auth.auth import AuthenticationBackend
 
-from kitman.apps.iam.errors import StrategyDestroyNotSupportedError
+from kitman.kits.iam.errors import StrategyDestroyNotSupportedError
 from . import schemas
 from fastapi import status
-from kitman.apps.iam.auth import NoOpTransport
-from kitman.apps.iam.domain import (
+from kitman.kits.iam.auth import NoOpTransport
+from kitman.kits.iam.domain import (
     IStrategy,
     IUser,
     IUserService,

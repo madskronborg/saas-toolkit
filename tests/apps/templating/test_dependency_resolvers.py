@@ -1,9 +1,9 @@
-from kitman.apps.templating import dependency_resolvers, templating
+from kitman.kits.templating import dependency_resolvers, templating
 
 from .fixtures import template_child, template, template_standalone, template_group
 
-from kitman.apps.templating.dependency_resolvers import TemplateDependencyResolver
-from kitman.apps.templating import TemplateBuilder
+from kitman.kits.templating.dependency_resolvers import TemplateDependencyResolver
+from kitman.kits.templating import TemplateBuilder
 
 from pprint import pprint
 

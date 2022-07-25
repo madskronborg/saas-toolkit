@@ -4,13 +4,13 @@ from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import MetaData
 
-from kitman.apps.iam.conf import IAMConfig
+from kitman.kits.iam.conf import IAMConfig
 from .logging import logger
 from deepmerge import always_merger
 from kitman import errors
 
 # App Settings
-from kitman.apps.templating.apps import TemplatingConfig
+from kitman.kits.templating.apps import TemplatingConfig
 
 
 class BaseSettings(BaseModel):

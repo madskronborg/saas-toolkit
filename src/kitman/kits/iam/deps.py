@@ -1,4 +1,4 @@
-from kitman.apps.iam.auth import Authenticator
+from kitman.kits.iam.auth import Authenticator
 
 
 def get_current_user_factory():
