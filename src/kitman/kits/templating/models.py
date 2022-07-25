@@ -10,21 +10,21 @@ TTemplateVariable = TypeVar("TTemplateVariable", bound="BaseTemplateVariable")
 TTemplateItem = TypeVar("TTemplateItem", bound="BaseTemplateItem")
 
 ## User Models
-TemplateVariable = settings.apps.templating.models.template_variable.model
-TemplateItem = settings.apps.templating.models.template_item.model
-Template = settings.apps.templating.models.template.model
-TemplateGroup = settings.apps.templating.models.template_group.model
+TemplateVariable = settings.kits.templating.models.template_variable.model
+TemplateItem = settings.kits.templating.models.template_item.model
+Template = settings.kits.templating.models.template.model
+TemplateGroup = settings.kits.templating.models.template_group.model
 TemplateThroughTemplateVariable = (
-    settings.apps.templating.models.template_through_template_variable.model
+    settings.kits.templating.models.template_through_template_variable.model
 )
 TemplateThroughTemplateItem = (
-    settings.apps.templating.models.template_through_template_item.model
+    settings.kits.templating.models.template_through_template_item.model
 )
 TemplateGroupThroughTemplate = (
-    settings.apps.templating.models.template_group_through_template.model
+    settings.kits.templating.models.template_group_through_template.model
 )
 TemplateGroupThroughTemplateVariable = (
-    settings.apps.templating.models.template_through_template_variable.model
+    settings.kits.templating.models.template_through_template_variable.model
 )
 
 

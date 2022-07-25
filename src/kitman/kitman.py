@@ -93,9 +93,15 @@ class Plugin(Installable):
                         break
 
                 if not plugin_config_valid:
-                    self.fail(
-                        f"{self.__class__.__name__} is missing required plugin for {plugin_config[0]}"
-                    )
+
+                    if raise_exception:
+                        self.fail(
+                            f"{self.__class__.__name__} is missing required plugin for {plugin_config[0]}"
+                        )
+                    else:
+                        return False
+
+        return valid
 
 
 class Kit(Plugin):

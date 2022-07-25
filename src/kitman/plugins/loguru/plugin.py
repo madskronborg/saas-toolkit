@@ -1,17 +1,19 @@
 import loguru
 from kitman import Plugin, Kitman
-from loguru import logger, Logger
+from loguru import Logger
 
 
 class LoguruPlugin(Plugin):
 
-    name = "Loguru Plugin"
+    name = "Loguru"
     description = "A plugin that provides a loguru logger dependency"
 
     def get_logger(self) -> Logger:
 
+        logger = Logger()
+
         if self.kitman.settings.logging.enable:
-            logger.enable()
+            logger.enable("kitman")
         else:
-            logger.disable()
+            logger.disable("kitman")
         return logger

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import MetaData
 
 from kitman.kits.iam.conf import IAMConfig
-from .logging import logger
+from kitman.plugins.redis import RedisConf
 from deepmerge import always_merger
 from kitman import errors
 
@@ -29,7 +29,12 @@ class LoggingSettings(BaseSettings):
     enable: bool = False
 
 
-class AppSettings(BaseSettings):
+class PluginSettings(BaseSettings):
+
+    redis: RedisConf | None = None
+
+
+class KitSettings(BaseSettings):
 
     templating: TemplatingConfig | None = None
     iam: IAMConfig | None = None
@@ -40,7 +45,8 @@ class Settings(BaseSettings):
     base_dir: Path
     sql: SQLSettings = SQLSettings()
     logging: LoggingSettings = LoggingSettings()
-    apps: AppSettings = AppSettings()
+    plugins: PluginSettings = PluginSettings()
+    kits: KitSettings = KitSettings()
 
 
 settings: Settings = Settings()
@@ -71,9 +77,3 @@ def configure(user_settings: Settings | dict, partial: bool = False) -> None:
     for key, value in new_settings.items():
 
         setattr(settings, key, value)
-
-    # Logging
-    if settings.logging.enable:
-        logger.enable("kitman")
-    else:
-        logger.disable("kitman")

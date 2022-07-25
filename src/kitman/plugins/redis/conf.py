@@ -5,7 +5,7 @@ from kitman.core import dynamic
 from .client import Redis, Sentinel
 
 
-class RedisSettings(BaseSettings):
+class RedisConf(BaseSettings):
 
     __redis_options: list[str] = []
 

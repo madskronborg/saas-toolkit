@@ -19,7 +19,7 @@ from kitman.kits.iam.domain import (
 from kitman import errors
 from kitman.conf import settings
 
-UserService = settings.apps.iam.services.users
+UserService = settings.kits.iam.services.users
 
 
 class UserIDHeader(SecurityBase):

@@ -11,10 +11,10 @@ TCustomerModel = TypeVar("TCustomerModel", bound="BaseCustomer")
 TMembershipModel = TypeVar("TMembershipModel", bound="BaseMembership")
 TInvitationModel = TypeVar("TInvitationModel", bound="BaseInvitation")
 
-User = settings.apps.iam.models.user.model
-Customer = settings.apps.iam.models.customer.model
-Membership = settings.apps.iam.models.membership.model
-Invitation = settings.apps.iam.models.invitation.model
+User = settings.kits.iam.models.user.model
+Customer = settings.kits.iam.models.customer.model
+Membership = settings.kits.iam.models.membership.model
+Invitation = settings.kits.iam.models.invitation.model
 
 
 class BaseUser(domain.IUser, BaseModel, Generic[TCustomerModel, TMembershipModel]):
