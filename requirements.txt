@@ -8,6 +8,9 @@ httpx[http2]
 makefun
 deepdiff
 
+# CLI
+typer[all]
+
 # Redis
 redis
 hiredis
