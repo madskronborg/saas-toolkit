@@ -19,7 +19,7 @@ class Installable:
 
     @property
     def ready(self) -> bool:
-        return self.check(raise_exception=False)
+        return self._check(raise_exception=False)
 
     def install(self, kitman: Kitman) -> None:
         self.kitman = kitman
@@ -39,7 +39,7 @@ class Installable:
 
         raise InstallableError(message, *args, **kwargs)
 
-    def check(self, raise_exception: bool = True) -> bool:
+    def _check(self, raise_exception: bool = True) -> bool:
         """
         check
 
@@ -83,7 +83,7 @@ class Kitman(App, Generic[TSettings]):
 
         installable.install(self)
 
-        installable.check()
+        installable._check()
 
         if isinstance(installable, App):
             self.apps[installable] = installable
