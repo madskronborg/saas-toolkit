@@ -19,17 +19,18 @@ class CorsPluginManager(InstallableManager["CorsPlugin", CorsConf]):
     def install(self, kitman: Kitman, conf: CorsConf | None = None) -> None:
         super().install(kitman, conf)
 
-        if conf:
+        if self.conf:
             kitman.fastapi.add_middleware(
                 CORSMiddleware,
-                allow_origins=[str(origin) for origin in conf.ORIGINS],
-                allow_credentials=conf.ALLOW_CREDENTIALS,
-                allow_methods=conf.ALLOW_METHODS,
-                allow_headers=conf.ALLOW_HEADERS,
+                allow_origins=[str(origin) for origin in self.conf.ORIGINS],
+                allow_credentials=self.conf.ALLOW_CREDENTIALS,
+                allow_methods=self.conf.ALLOW_METHODS,
+                allow_headers=self.conf.ALLOW_HEADERS,
             )
 
 
-class CorsPlugin(Plugin[CorsPluginManager, CorsConf]):
+class CorsPlugin(Plugin[CorsConf]):
 
     name = "cors"
     description = "A plugin for adding cors headers to FastAPI"
+    manager = CorsPluginManager()

@@ -21,18 +21,31 @@ class InstallableError(Exception):
 
 class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
 
-    parent: TInstallable | Installable
+    default_conf: TInstallableConf | None = None
+    require_conf: bool = False
+
+    parent: TInstallable | Installable | None = None
 
     plugins: dict[type[Plugin], Plugin] = []
     required_plugins: list[tuple[str, set[type["Plugin"]]]] = []
 
     @property
     def ready(self) -> bool:
-        return self._check(raise_exception=False)
+        return self.check(raise_exception=False)
+
+    @property
+    def kitman(self) -> TInstallable:
+
+        return self.parent.kitman
+
+    @property
+    def conf(self) -> TInstallableConf:
+
+        return self.parent.conf
 
     def install(self, kitman: Kitman, conf: TInstallableConf | None = None) -> None:
         self.parent.kitman = kitman
-        self.parent.conf = conf
+        self.parent.conf = conf or self.default_conf
 
     def fail(self, message: str, *args, **kwargs) -> None:
         """
@@ -49,7 +62,7 @@ class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
 
         raise InstallableError(message, *args, **kwargs)
 
-    def _check(self, raise_exception: bool = True) -> bool:
+    def check(self, raise_exception: bool = True) -> bool:
         """
         check
 
@@ -69,6 +82,11 @@ class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
                 )
 
             return False
+
+        if self.require_conf:
+
+            if not self.parent.conf:
+                self.fail(f"No config provided but config is required")
 
         if self.required_plugins:
 
@@ -118,19 +136,25 @@ class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
 TInstallableManager = TypeVar("TInstallableManager", bound=InstallableManager)
 
 
-class Installable(Generic[TInstallableManager, TInstallableConf]):
+class Installable(Generic[TInstallableConf]):
     name: str
     description: str
     kitman: Kitman | None = None
     conf: TInstallableConf | None = None
-    manager: TInstallableManager | InstallableManager = InstallableManager()
+    manager: InstallableManager = InstallableManager()
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.manager.parent = self
 
 
-class Plugin(Installable[TInstallableManager, TInstallableConf]):
+class Plugin(Installable[TInstallableConf]):
     pass
 
 
-class Kit(Plugin[TInstallableManager, TInstallableConf]):
+class Kit(Plugin[TInstallableConf]):
     pass
 
 
@@ -156,7 +180,7 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
 
         installable.manager.install(self, conf)
 
-        installable.manager._check()
+        installable.manager.check()
 
         if isinstance(installable, Plugin):
             self.kits[installable_type] = installable

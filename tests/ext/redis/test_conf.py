@@ -7,14 +7,14 @@ def test_redis_settings():
 
     callable_types = dynamic.get_callable_types(redis.Redis.__init__)
 
-    settings = redis.RedisConf()
+    settings = redis.RedisPluginConf()
 
     for parameter in callable_types.parameters.values():
 
         # Assert attr exists
         attr_name = f"REDIS_{parameter.name.upper()}"
         assert hasattr(
-            redis.RedisConf,
+            redis.RedisPluginConf,
             attr_name,
         ), f"Attribute {attr_name} does not exist on RedisSettings. Please add {str(parameter)} to RedisSettings"
 

@@ -1,6 +1,6 @@
 from typing import Any
 from databases import Database
-from pydantic import BaseModel, PostgresDsn
+from pydantic import BaseModel, PostgresDsn, validator
 from sqlalchemy import MetaData
 from kitman import Plugin, Kitman
 from kitman.kitman import InstallableManager
@@ -15,7 +15,7 @@ class PostgresConf(BaseModel):
     DB: str
     URI: PostgresDsn | None = None
 
-    @validator("POSTGRES_URI", pre=True)
+    @validator("URI", pre=True)
     def assemble_db_connection(cls, v: str | None, values: dict[str, Any]) -> Any:
         if isinstance(v, str):
             return v
@@ -40,6 +40,9 @@ class OrmarConnection(BaseModel):
 
 
 class OrmarPluginManager(InstallableManager["OrmarPlugin", OrmarConf]):
+
+    require_conf = True
+
     required_plugins = [
         (
             "logger",
@@ -65,11 +68,11 @@ class OrmarPluginManager(InstallableManager["OrmarPlugin", OrmarConf]):
             kitman.fastapi.add_event_handler("shutdown", self.parent.stop_database)
 
 
-class OrmarPlugin(Plugin[OrmarPluginManager, OrmarConf]):
+class OrmarPlugin(Plugin[OrmarConf]):
     name = "Ormar"
     description = "A kit for setting up Ormar with FastAPI"
-
-    connection: OrmarConnection = {}
+    manager = OrmarPluginManager()
+    connection: OrmarConnection
 
     # Deps
     def init_db(self):

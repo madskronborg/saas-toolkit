@@ -5,7 +5,7 @@ from pydantic import BaseModel, SecretStr
 from sqlalchemy import MetaData
 
 from kitman.kits.iam.conf import IAMConfig
-from kitman.plugins.redis import RedisConf
+from kitman.plugins.redis import RedisPluginConf
 from deepmerge import always_merger
 from kitman import errors
 
