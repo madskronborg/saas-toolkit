@@ -5,6 +5,9 @@ from sqlalchemy import MetaData
 from kitman import Plugin, Kitman
 from kitman.kitman import InstallableManager
 from kitman.plugins.loguru import LoguruPlugin
+from ormar import ModelMeta
+
+from .models import BaseQueryset
 
 
 class PostgresConf(BaseModel):
@@ -55,10 +58,10 @@ class OrmarPluginManager(InstallableManager["OrmarPlugin", OrmarConf]):
     def install(self, kitman: Kitman, conf: OrmarConf | None = None) -> None:
         super().install(kitman, conf)
 
-        if conf:
-            db_url = conf.database.URI
+        if self.conf:
+            db_url = self.conf.database.URI
 
-            metadata = conf.metadata
+            metadata = self.conf.metadata
             db = Database(db_url)
 
             self.parent.connection = OrmarConnection(metadata=metadata, database=db)
@@ -73,6 +76,15 @@ class OrmarPlugin(Plugin[OrmarConf]):
     description = "A kit for setting up Ormar with FastAPI"
     manager = OrmarPluginManager()
     connection: OrmarConnection
+
+    # Helpers
+    def get_model_meta_class(self) -> type[ModelMeta]:
+        class BaseMeta(ModelMeta):
+            metadata = self.connection.metadata
+            database = self.connection.database
+            queryset_class = BaseQueryset
+
+        return BaseMeta
 
     # Deps
     def init_db(self):

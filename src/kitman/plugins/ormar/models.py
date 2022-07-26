@@ -1,6 +1,5 @@
 import datetime
 from typing import TYPE_CHECKING
-from typing_extensions import Self
 import uuid
 import ormar
 from ormar.models import T
@@ -8,11 +7,7 @@ from ormar.relations.querysetproxy import QuerysetProxy
 
 from kitman import errors
 
-from kitman.conf import settings
-
 # Queryset
-
-
 class BaseQueryset(ormar.QuerySet[T]):
     async def get_or_404(self, *args, **kwargs) -> T:
 
@@ -25,14 +20,6 @@ class BaseQueryset(ormar.QuerySet[T]):
 
 
 # Models
-
-
-class BaseMeta(ormar.ModelMeta):
-    metadata = settings.sql.metadata
-    database = settings.sql.database
-    queryset_class = BaseQueryset
-
-
 class BaseModel(ormar.Model):
     class Meta:
         abstract = True

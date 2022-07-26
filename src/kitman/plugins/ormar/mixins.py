@@ -2,7 +2,7 @@ import asyncio
 from typing import Type
 
 from sqlalchemy import desc
-from kitman.db.models import ormar, QuerysetProxy
+from .models import ormar, QuerysetProxy
 from typing_extensions import Self
 
 
