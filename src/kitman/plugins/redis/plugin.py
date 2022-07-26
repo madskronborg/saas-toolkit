@@ -26,7 +26,6 @@ class RedisPlugin(Plugin):
         return valid
 
     # Dependencies
-
     def get_client(self, override_conf: RedisConf | None = None) -> Redis:
 
         options = self._get_redis_options(override_conf)

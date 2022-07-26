@@ -1,7 +1,7 @@
 from typing import Optional, Type
 from databases import Database
 from pathlib import Path
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from sqlalchemy import MetaData
 
 from kitman.kits.iam.conf import IAMConfig
@@ -19,61 +19,12 @@ class BaseSettings(BaseModel):
         validate_assignment = True
 
 
-class SQLSettings(BaseSettings):
-    metadata: Optional[MetaData] = None
-    database: Optional[Database] = None
-
-
-class LoggingSettings(BaseSettings):
-
-    enable: bool = False
-
-
-class PluginSettings(BaseSettings):
-
-    redis: RedisConf | None = None
-
-
-class KitSettings(BaseSettings):
-
-    templating: TemplatingConfig | None = None
-    iam: IAMConfig | None = None
-
-
 class Settings(BaseSettings):
 
+    project_name: str
+    env: str = "development"
+    secret: SecretStr = "JDEkd3FLMERidi4kelpuQ2tWelFsM3NuVUdiZXFGUjltMQo="
     base_dir: Path
-    sql: SQLSettings = SQLSettings()
-    logging: LoggingSettings = LoggingSettings()
-    plugins: PluginSettings = PluginSettings()
-    kits: KitSettings = KitSettings()
 
 
 settings: Settings = Settings()
-
-
-def configure(user_settings: Settings | dict, partial: bool = False) -> None:
-    new_settings: Optional[dict] = None
-
-    logger.info("User Settings are:", user_settings, "Partial:", partial)
-
-    if not partial:
-
-        if isinstance(user_settings, dict):
-            new_settings = user_settings
-        else:
-            new_settings = user_settings.dict()
-
-    if partial:
-
-        if isinstance(user_settings, dict):
-            new_settings = always_merger.merge(settings.dict(), user_settings)
-        else:
-            new_settings = always_merger.merge(settings.dict(), user_settings.dict())
-
-    if new_settings == None:
-        raise ValueError("new_settings are not set!")
-
-    for key, value in new_settings.items():
-
-        setattr(settings, key, value)

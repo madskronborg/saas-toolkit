@@ -1,29 +1,38 @@
 from typing import Generic, TypeVar
 
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Request
+from pydantic import BaseModel, BaseSettings
+from pydantic.generics import GenericModel
+from fastapi.responses import JSONResponse
+
+from kitman import errors
 
 from .conf import Settings
 from __future__ import annotations
 
-TSettings = TypeVar("TSettings", bound=Settings)
+TKitmanSettings = TypeVar("TKitmanSettings", bound=Settings)
+TInstallableConf = TypeVar("TInstallableConf", bound=BaseSettings | BaseModel)
+TInstallable = TypeVar("TInstallable", bound="Installable")
 
 
 class InstallableError(Exception):
     pass
 
 
-class Installable:
-    name: str
-    description: str
-    kitman: Kitman | None = None
+class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
+
+    parent: TInstallable | Installable
+
+    plugins: dict[type[Plugin], Plugin] = []
+    required_plugins: list[tuple[str, set[type["Plugin"]]]] = []
 
     @property
     def ready(self) -> bool:
         return self._check(raise_exception=False)
 
-    def install(self, kitman: Kitman) -> None:
-        self.kitman = kitman
+    def install(self, kitman: Kitman, conf: TInstallableConf | None = None) -> None:
+        self.parent.kitman = kitman
+        self.parent.conf = conf
 
     def fail(self, message: str, *args, **kwargs) -> None:
         """
@@ -53,7 +62,7 @@ class Installable:
             InstallableError: An Installable error
         """
 
-        if self.kitman is None:
+        if self.parent.kitman is None:
             if raise_exception:
                 self.fail(
                     "Kitman is not set. Have you installed it by calling the .use() method on a kitman instance?"
@@ -61,28 +70,11 @@ class Installable:
 
             return False
 
-        return True
+        if self.required_plugins:
 
+            installed_plugins = self.plugins()
 
-class Plugin(Installable):
-    class Config:
-        required_plugins = list[tuple[str, set[type["Plugin"]]]] = []
-
-    @property
-    def config(self) -> Config:
-
-        return self.Config()
-
-    plugins: dict[type[Plugin], Plugin] = {}
-
-    def _check(self, raise_exception: bool = True) -> bool:
-        valid = super()._check(raise_exception)
-
-        if self.config.required_plugins:
-
-            installed_plugins = self.plugins.values()
-
-            for plugin_config in self.config.required_plugins:
+            for plugin_config in self.required_plugins:
 
                 plugin_config_valid: bool = False
 
@@ -101,15 +93,48 @@ class Plugin(Installable):
                     else:
                         return False
 
-        return valid
+        # Default to True
+        return True
+
+    def get_plugin(self, name: str) -> Plugin | None:
+
+        for plugin_config in self.required_plugins:
+
+            if not plugin_config[0] == name:
+                continue
+
+            for plugin_type in plugin_config[1]:
+
+                if plugin_type in self.plugins:
+                    return self.plugins[plugin_type]
+
+        return None
+
+    def add_plugin(self, plugin: Plugin) -> None:
+
+        self.plugins[type(plugin)] = plugin
 
 
-class Kit(Plugin):
+TInstallableManager = TypeVar("TInstallableManager", bound=InstallableManager)
 
+
+class Installable(Generic[TInstallableManager, TInstallableConf]):
+    name: str
+    description: str
+    kitman: Kitman | None = None
+    conf: TInstallableConf | None = None
+    manager: TInstallableManager | InstallableManager = InstallableManager()
+
+
+class Plugin(Installable[TInstallableManager, TInstallableConf]):
     pass
 
 
-class Kitman(Kit, Generic[TSettings]):
+class Kit(Plugin[TInstallableManager, TInstallableConf]):
+    pass
+
+
+class Kitman(Plugin, Generic[TKitmanSettings]):
 
     fastapi: FastAPI
     settings: Settings
@@ -120,16 +145,35 @@ class Kitman(Kit, Generic[TSettings]):
         self.fastapi = fastapi
         self.settings = settings
 
-    def use(self, installable: Kit | Plugin) -> None:
+        self.fastapi.title = settings.project_name
+        self.fastapi.add_exception_handler(errors.HTTPError, self.exception_handler)
+
+    def use(
+        self, installable: Plugin | Plugin, conf: BaseSettings | BaseModel | None = None
+    ) -> None:
 
         installable_type = type(installable)
 
-        installable.install(self)
+        installable.manager.install(self, conf)
 
-        installable._check()
+        installable.manager._check()
 
-        if isinstance(installable, Kit):
+        if isinstance(installable, Plugin):
             self.kits[installable_type] = installable
 
         else:
-            self.plugins[installable_type] = installable
+            self.manager.plugins[installable_type] = installable
+
+    async def exception_handler(
+        self, request: Request, exc: errors.HTTPError
+    ) -> JSONResponse:
+
+        data = dict(
+            status_code=exc.status_code,
+        )
+
+        content: dict = dict(detail=exc.message, code=exc.code)
+
+        data["content"] = content
+
+        return JSONResponse(**data)
