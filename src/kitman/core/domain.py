@@ -1,3 +1,4 @@
+import enum
 from typing import (
     Any,
     AsyncGenerator,
@@ -31,3 +32,9 @@ class IModel(Protocol):
 
 class IService(Protocol):
     pass
+
+
+class Location(str, enum.Enum):
+    header = "header"
+    query = "query"
+    cookie = "cookie"
