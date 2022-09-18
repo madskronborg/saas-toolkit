@@ -1,4 +1,5 @@
-from typing import Generic, TypeVar
+from __future__ import annotations
+from typing import Generic, TypeVar, overload
 
 from fastapi import FastAPI, Request
 from pydantic import BaseModel, BaseSettings
@@ -6,9 +7,13 @@ from pydantic.generics import GenericModel
 from fastapi.responses import JSONResponse
 
 from kitman import errors
+from kitman.core.commands import Command, CommandHandler, TCommandHandler
+
+from kitman.core.events import BaseEmitter, DomainEvent, EventHandler
+from kitman.core.queries import Query, QueryHandler, TQueryHandler
 
 from .conf import Settings
-from __future__ import annotations
+
 
 TKitmanSettings = TypeVar("TKitmanSettings", bound=Settings)
 TInstallableConf = TypeVar("TInstallableConf", bound=BaseSettings | BaseModel)
@@ -162,19 +167,32 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
 
     fastapi: FastAPI
     settings: Settings
+    emitter: BaseEmitter | None = None
     kits: dict[type[Kit], Kit] = {}
 
-    def __init__(self, fastapi: FastAPI, settings: Settings):
+    commands: dict[type[CommandHandler], CommandHandler] = {}
+    queries: dict[type[QueryHandler], QueryHandler] = {}
+    events: dict[type[DomainEvent], set[EventHandler]] = {}
 
-        self.fastapi = fastapi
+    def __init__(self, settings: Settings, emitter: BaseEmitter | None = None):
+
         self.settings = settings
 
-        self.fastapi.title = settings.project_name
-        self.fastapi.add_exception_handler(errors.HTTPError, self.exception_handler)
+        if emitter:
+            emitter.bind(self)
+            self.emitter = emitter
 
     def use(
-        self, installable: Plugin | Plugin, conf: BaseSettings | BaseModel | None = None
+        self,
+        installable: FastAPI | Plugin | Kit,
+        conf: BaseSettings | BaseModel | None = None,
     ) -> None:
+
+        if isinstance(installable, FastAPI):
+            self.fastapi = installable
+            self.fastapi.title = self.settings.project_name
+            self.fastapi.add_exception_handler(errors.HTTPError, self.exception_handler)
+            return
 
         installable_type = type(installable)
 
@@ -187,6 +205,54 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
 
         else:
             self.manager.plugins[installable_type] = installable
+
+    # Domain Driven Design
+    async def emit(self, event: DomainEvent):
+        await self.emitter.emit(event)
+
+    def event(self, handler: EventHandler):
+        handler.kitman = self
+
+        for event_type in handler.handles:
+
+            self.events.setdefault(event_type, set())
+
+            self.events[event_type].add(handler)
+
+    def command(self, handler: CommandHandler):
+        handler.kitman = self
+        self.commands[type(handler)] = handler
+
+    def query(self, handler: QueryHandler):
+        handler.kitman = self
+        self.queries[type(handler)] = handler
+
+    @overload
+    def inject(self, token: type[TQueryHandler]) -> TQueryHandler:
+        ...
+
+    @overload
+    def inject(self, token: type[TCommandHandler]) -> TCommandHandler:
+        ...
+
+    def inject(self, token: type[TQueryHandler] | type[TCommandHandler]):
+
+        handler = None
+
+        if issubclass(token, QueryHandler):
+
+            handler = self.queries[token]
+
+        if issubclass(token, CommandHandler):
+
+            handler = self.commands[token]
+
+        if not handler:
+            raise Exception("No injectable found for token:", token)
+
+        return handler
+
+    # End domain driven design
 
     async def exception_handler(
         self, request: Request, exc: errors.HTTPError

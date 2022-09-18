@@ -1,12 +1,12 @@
 from typing import Optional
-from pydantic import BaseModel
+from fastapi import status
 
 
 class HTTPError(Exception):
 
     message: str | int | dict | list
     code: Optional[int] = None
-    status_code: int = 400
+    status_code: int = status.HTTP_400_BAD_REQUEST
 
     def __init__(
         self,
@@ -36,4 +36,4 @@ class NotFound(HTTPError):
     Raises a HTTP 404 not found error.
     """
 
-    status_code: int = 404
+    status_code: int = status.HTTP_404_NOT_FOUND
