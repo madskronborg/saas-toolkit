@@ -7,7 +7,6 @@ deepmerge
 httpx[http2]
 makefun
 deepdiff
-multimethod
 
 # CLI
 typer[all]

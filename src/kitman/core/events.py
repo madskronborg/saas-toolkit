@@ -4,7 +4,6 @@ from uuid import uuid4
 from pydantic import BaseModel, Field, UUID4
 import datetime
 from asyncio import gather
-from multimethod import multimeta
 
 if TYPE_CHECKING:
     from kitman import Kitman
@@ -15,10 +14,10 @@ class DomainEvent(BaseModel):
     created: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
 
-class EventHandler(metaclass=multimeta):
+class EventHandler:
 
     kitman: "Kitman"
-    handles: list[DomainEvent] = set()
+    handles: set[DomainEvent] = set()
 
     async def handle(self, event: DomainEvent):
         ...
