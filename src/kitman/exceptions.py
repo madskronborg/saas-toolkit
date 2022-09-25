@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import status
+from fastapi import status, exceptions
 
 
 class HTTPError(Exception):
