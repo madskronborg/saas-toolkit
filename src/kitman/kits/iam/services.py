@@ -3,7 +3,7 @@ from typing import Generic, TypeVar
 
 from uuid import UUID
 
-from . import errors, domain
+from . import exceptions, domain
 
 
 class BaseAccessService(
@@ -28,7 +28,7 @@ class BaseAccessService(
             namespace (str | None): An authorization namespace
 
         Raises:
-            errors.NoNamespaceError: If there is no namespace set
+            exceptions.NoNamespaceError: If there is no namespace set
 
         Returns:
             str: A namespace
@@ -40,7 +40,7 @@ class BaseAccessService(
         if self.namespace:
             return namespace
 
-        raise errors.NoNamespaceError(
+        raise exceptions.NoNamespaceError(
             f"No namespace found for class f{self.__class__.__name__}",
             code=500,
             status_code=500,

@@ -4,7 +4,7 @@ from fastapi import Request
 from fastapi.security.base import SecurityBase
 from kitman.kits.iam.auth.auth import AuthenticationBackend
 
-from kitman.kits.iam.errors import StrategyDestroyNotSupportedError
+from kitman.kits.iam.exceptions import StrategyDestroyNotSupportedError
 from . import schemas
 from fastapi import status
 from kitman.kits.iam.auth import NoOpTransport
@@ -16,7 +16,7 @@ from kitman.kits.iam.domain import (
     TUser,
     ITransport,
 )
-from kitman import errors
+from kitman import exceptions
 from kitman.conf import settings
 
 UserService = settings.kits.iam.services.users
@@ -41,7 +41,7 @@ class UserIDHeader(SecurityBase):
         user_id: str = request.headers.get(self.model.name)
         if not user_id:
             if self.auto_error:
-                raise errors.HTTPError(
+                raise exceptions.HTTPError(
                     status_code=status.HTTP_403_FORBIDDEN,
                     message=f"Not authenticated. Header {self.model.name} did not contain a user id.",
                 )

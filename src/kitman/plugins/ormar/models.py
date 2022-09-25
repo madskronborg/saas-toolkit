@@ -5,7 +5,7 @@ import ormar
 from ormar.models import T
 from ormar.relations.querysetproxy import QuerysetProxy
 
-from kitman import errors
+from kitman import exceptions
 
 # Queryset
 class BaseQueryset(ormar.QuerySet[T]):
@@ -14,7 +14,7 @@ class BaseQueryset(ormar.QuerySet[T]):
         entity = await self.get_or_none(*args, **kwargs)
 
         if entity is None:
-            raise errors.NotFound(f"{self.model.__class__.__name__} not found")
+            raise exceptions.NotFound(f"{self.model.__class__.__name__} not found")
 
         return entity
 

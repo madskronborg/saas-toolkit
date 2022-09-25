@@ -80,4 +80,4 @@ Voilà! Our FastAPI app now have:
 
 - CORS enabled
 - A Postgres database connection which will be started and stopped automatically on app start and shutdown
-- Error responses whenever we raise an error that subclasses `kitman.errors.Error`.
+- Error responses whenever we raise an error that subclasses `kitman.exceptions.Error`.

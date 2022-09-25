@@ -1,6 +1,6 @@
 import re
 from typing import Generic
-from . import domain, errors
+from . import domain, exceptions
 
 from kitman.core import dynamic
 
@@ -124,7 +124,7 @@ class TemplateDependencyResolver(
             raise_exception (bool, optional): Raise exception if validation fails. Defaults to False.
 
         Raises:
-            errors.TemplateDependencyError: if `raise_exception` is `True` and there are unknown variables or invalid required variables
+            exceptions.TemplateDependencyError: if `raise_exception` is `True` and there are unknown variables or invalid required variables
 
         Returns:
             bool: _description_
@@ -157,7 +157,9 @@ class TemplateDependencyResolver(
             error_message["unknown_variables"] = unknown_variables
             error_message["invalid_required_variables"] = invalid_required_variables
 
-            raise errors.TemplateDependencyError(message=error_message, status_code=400)
+            raise exceptions.TemplateDependencyError(
+                message=error_message, status_code=400
+            )
 
         return False
 
@@ -180,7 +182,7 @@ class TemplateDependencyResolver(
 
         if raise_exception:
 
-            raise errors.TemplateDependencyError(
+            raise exceptions.TemplateDependencyError(
                 OrderedDict(
                     message="Item has unknown variables",
                     item=item.dict(),

@@ -6,7 +6,7 @@ from pydantic import BaseModel, BaseSettings
 from pydantic.generics import GenericModel
 from fastapi.responses import JSONResponse
 
-from kitman import errors
+from kitman import exceptions
 from kitman.core.commands import Command, CommandHandler, TCommandHandler
 
 from kitman.core.events import BaseEmitter, DomainEvent, EventHandler
@@ -191,7 +191,9 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
         if isinstance(installable, FastAPI):
             self.fastapi = installable
             self.fastapi.title = self.settings.project_name
-            self.fastapi.add_exception_handler(errors.HTTPError, self.exception_handler)
+            self.fastapi.add_exception_handler(
+                exceptions.HTTPError, self.exception_handler
+            )
             return
 
         installable_type = type(installable)
@@ -255,7 +257,7 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
     # End domain driven design
 
     async def exception_handler(
-        self, request: Request, exc: errors.HTTPError
+        self, request: Request, exc: exceptions.HTTPError
     ) -> JSONResponse:
 
         data = dict(

@@ -6,7 +6,7 @@ import ormar
 import pytest
 
 from kitman.db import models, mixins
-from kitman import errors
+from kitman import exceptions
 
 
 class MyModel(models.BaseModel):
@@ -24,7 +24,7 @@ class MyOrderableModel(models.BaseModel, mixins.OrderableMixin):
 
 async def test_base_queryset(db: Database):
 
-    with pytest.raises(errors.NotFound):
+    with pytest.raises(exceptions.NotFound):
 
         await MyModel.objects.get_or_404(id="bla")
 

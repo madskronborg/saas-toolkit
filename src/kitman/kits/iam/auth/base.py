@@ -5,7 +5,7 @@ from fastapi import Depends, Header, Query, Request
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
 from kitman import Plugin, Kitman, InstallableManager, TInstallableConf, TInstallable
-from kitman.core import errors
+from kitman.core import exceptions
 from fastapi import status
 
 from .. import domain
@@ -83,7 +83,7 @@ class BaseAuthenticationPlugin(Plugin, Generic[TAuthenticationConf, domain.TUser
             user = await self.conf.get_user(user_id, active, verified)
 
             if not user:
-                raise errors.HTTPError(
+                raise exceptions.HTTPError(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
                     headers={"WWW-Authenticate": "Bearer"},

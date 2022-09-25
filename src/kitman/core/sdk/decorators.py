@@ -8,7 +8,7 @@ import httpx
 from pydantic import parse_obj_as, validate_arguments
 from kitman import logger
 from kitman.core import dynamic
-from . import errors
+from . import exceptions
 from dataclasses import dataclass
 
 TRequest = TypeVar("TRequest", bound=Request)

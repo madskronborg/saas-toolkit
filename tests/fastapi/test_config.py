@@ -8,7 +8,7 @@ from kitman.fastapi.conf import (
     PostgresSettings,
     setup as fastapi_setup,
 )
-from kitman import errors
+from kitman import exceptions
 from kitman.conf import settings
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware import Middleware
@@ -102,7 +102,7 @@ def test_setup(app: FastAPI):
     fastapi_setup(app)
 
     assert (
-        errors.HTTPError in app.exception_handlers
+        exceptions.HTTPError in app.exception_handlers
     ), "Setup did not install exception handler"
 
     class FullSettings(AppSettings, CorsSettings, PostgresSettings):

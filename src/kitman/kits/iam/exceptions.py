@@ -1,7 +1,7 @@
-from kitman.core import errors
+from kitman.core import exceptions
 
 
-class NoNamespaceError(errors.ConfigurationError):
+class NoNamespaceError(exceptions.ConfigurationError):
 
     pass
 
