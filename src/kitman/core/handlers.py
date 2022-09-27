@@ -15,9 +15,11 @@ class BaseHandler(Generic[TMessage]):
     kitman: "Kitman"
     handles: set[type[TMessage]] = set()
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
 
-        klass = super().__new__()
+        print("Args are:", args)
+
+        klass = super().__new__(cls)
 
         klass.handle = validate_arguments(klass.handle)
 
