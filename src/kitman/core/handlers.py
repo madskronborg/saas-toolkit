@@ -17,7 +17,7 @@ class BaseHandler(Generic[TMessage]):
 
     def __new__(cls):
 
-        klass = super().__new__(cls)
+        klass = super().__new__()
 
         klass.handle = validate_arguments(klass.handle)
 
