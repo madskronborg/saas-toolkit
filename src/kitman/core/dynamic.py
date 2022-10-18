@@ -60,10 +60,10 @@ def make_async(func: Callable[TParams, TReturnType]) -> Callable[TParams, TRetur
     Makes sure func is async. If it is not async, it will wrap it as a future and execute it in a ThreadPool.
 
     Args:
-        func (Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]]): A sync or async function
+            func (Callable[TParams, TReturnType | Coroutine[None, None, TReturnType]]): A sync or async function
 
     Returns:
-        Callable[TParams, Coroutine[None, None, TReturnType]]: An async function
+            Callable[TParams, Coroutine[None, None, TReturnType]]: An async function
     """
 
     pool = ThreadPoolExecutor()
@@ -98,6 +98,21 @@ def get_callable_types(
     )
 
 
+def get_bound_params(callable_types: CallableTypes, *args, **kwargs) -> BoundArguments:
+
+    bound_params = callable_types.sig.bind(*args, **kwargs)
+
+    for param_name, param_value in bound_params.arguments.items():
+
+        bound_params.arguments[param_name] = convert_value_to_type(
+            param_value, callable_types.parameters[param_name].annotation
+        )
+
+    bound_params.apply_defaults()
+
+    return bound_params
+
+
 def convert_value_to_type(value: Any, annotation: TAnnotation) -> TAnnotation:
     """
     convert_value_to_type
@@ -105,11 +120,11 @@ def convert_value_to_type(value: Any, annotation: TAnnotation) -> TAnnotation:
     Convert a value to the specified type or raise an error
 
     Args:
-        annotation (TAnnotation): The desired type to convert the value to
-        value (Any): Any value
+            annotation (TAnnotation): The desired type to convert the value to
+            value (Any): Any value
 
     Returns:
-        TAnnotation: The value in the desired type
+            TAnnotation: The value in the desired type
     """
 
     if annotation == Signature.empty:
@@ -153,31 +168,31 @@ def make_action(
     `pre_hooks` and `post_hooks` are called in order, therefore, any alterations you make in a previous hook will be present in the following hooks.
 
     Example:
-        def log_args(params: BoundArguments, callable_types: CallableTypes, config: TActionConfig | None, *args, **kwargs) -> BoundArguments:
+            def log_args(params: BoundArguments, callable_types: CallableTypes, config: TActionConfig | None, *args, **kwargs) -> BoundArguments:
 
-                print("Params are:", str(params))
+                            print("Params are:", str(params))
 
-                return params
+                            return params
 
-        async def log_result_to_server(result: TReturnType, callable_types: CallableTypes, config: TActionConfig | None, *args, **kwargs):
+            async def log_result_to_server(result: TReturnType, callable_types: CallableTypes, config: TActionConfig | None, *args, **kwargs):
 
-            # Make async request to server ...
+                    # Make async request to server ...
 
-            return result
+                    return result
 
-        def action(func: Callable[TParams, TReturnType]):
+            def action(func: Callable[TParams, TReturnType]):
 
-           return make_action(func, pre_hooks=[log_args], post_hooks=[log_result_to_server])
+               return make_action(func, pre_hooks=[log_args], post_hooks=[log_result_to_server])
 
 
     Args:
-        func (Callable[TParams, TReturnType]): A function the decorator will wrap
-        config (TActionConfig, optional): A config that will be passed to hooks. Default is None.
-        pre_hooks (list[ Callable[ [BoundArguments, CallableTypes, TActionConfig | None, TParams], BoundArguments  |  Coroutine[None, None, BoundArguments], ] ], optional): A list of functions that can alter arguments and keyword arguments that will be passed to the wrapped function. Defaults to [].
-        post_hooks (list[ Callable[ [TReturnType, CallableTypes, TActionConfig | None, TParams], TReturnType  |  Coroutine[None, None, TReturnType], ] ], optional): A list of functions that can alter the result of calling the wrapped function. Defaults to [].
+            func (Callable[TParams, TReturnType]): A function the decorator will wrap
+            config (TActionConfig, optional): A config that will be passed to hooks. Default is None.
+            pre_hooks (list[ Callable[ [BoundArguments, CallableTypes, TActionConfig | None, TParams], BoundArguments  |  Coroutine[None, None, BoundArguments], ] ], optional): A list of functions that can alter arguments and keyword arguments that will be passed to the wrapped function. Defaults to [].
+            post_hooks (list[ Callable[ [TReturnType, CallableTypes, TActionConfig | None, TParams], TReturnType  |  Coroutine[None, None, TReturnType], ] ], optional): A list of functions that can alter the result of calling the wrapped function. Defaults to [].
 
-        **Makefun**
-        append_args (list[Parameter]): A list of parameters that will be appended to the wrapped function's signature. Default is [].
+            **Makefun**
+            append_args (list[Parameter]): A list of parameters that will be appended to the wrapped function's signature. Default is [].
 
     Returns:
        Callable[TParams, TReturnType]: The wrapped function as a coroutine
