@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, TypeVar, Generic
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Generic
 from pydantic import BaseModel, validate_arguments
 from fastapi import status
 from fastapi.exceptions import HTTPException
@@ -14,8 +14,8 @@ TMessage = TypeVar("TMessage", bound=BaseModel)
 
 def validate_handler(handler: type["BaseHandler"]):
     def decorator(
-        func: callable[dynamic.TParams, dynamic.TReturnType]
-    ) -> callable[dynamic.TParams, dynamic.TReturnType]:
+        func: Callable[dynamic.TParams, dynamic.TReturnType]
+    ) -> Callable[dynamic.TParams, dynamic.TReturnType]:
         @wraps(func)
         async def wrapper(
             *args: dynamic.TParams.args, **kwargs: dynamic.TParams.kwargs
