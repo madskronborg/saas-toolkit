@@ -8,6 +8,8 @@ deepmerge
 httpx[http2]
 makefun
 deepdiff
+pycountry
+phonenumbers
 
 # CLI
 typer[all]
