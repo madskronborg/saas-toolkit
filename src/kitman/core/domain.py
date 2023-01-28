@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import enum
 from typing import (
     Any,
@@ -7,11 +8,12 @@ from typing import (
     Protocol,
     Generic,
     Generator,
+    Self,
 )
 from uuid import UUID
 
 from ordered_set import TypeVar
-from pydantic import BaseModel, Field, validator, constr
+from pydantic import BaseModel, Field, validator, constr, create_model
 from pydantic.generics import GenericModel
 import datetime
 from uuid import uuid4
@@ -25,6 +27,7 @@ from phonenumbers import (
     number_type,
     parse as parse_phone_number,
 )
+from pydantic.fields import ModelField, FieldInfo
 
 
 # Value objects
@@ -59,6 +62,49 @@ class Location(str, enum.Enum):
 class Entity(BaseModel):
 
     uid: UUID = Field(default_factory=uuid4)
+
+    @classmethod
+    def to_schema(
+        cls,
+        name: str,
+        fields: list[str | tuple[str, ModelField]],
+        validators: dict[str, callable] = None,
+    ):
+
+        new_fields: OrderedDict[str, ModelField] = OrderedDict()
+        new_annotations: OrderedDict[str, type | None] = OrderedDict()
+
+        for field in fields:
+            field_name: str
+            field_config: ModelField
+
+            if isinstance(field, str):
+                field_name = field
+                field_config = cls.__fields__.get(field, None)
+
+                if not field_config:
+                    raise ValueError(
+                        f"Field with name: {field} does not exist on model: {cls.__name__}"
+                    )
+
+            if isinstance(field, tuple):
+                field_name, field_config = field
+                field_config.set_config(cls.Config)
+
+            new_fields.update({field_name, field_config})
+            new_annotations.update({field_name, field_config.annotation})
+
+        model = create_model(
+            name,
+            __base__=Schema,
+            __config__=cls.Config,
+            __validators__=validators,
+        )
+
+        model.__fields__.update(new_fields)
+        model.__annotations__.update(new_annotations)
+
+        return model
 
 
 class TimestampedEntity(Entity):
