@@ -106,7 +106,6 @@ class Entity(BaseModel):
         model = create_model(
             name,
             __base__=__base__,
-            __config__=cls.Config,
             __validators__=validators,
         )
 
