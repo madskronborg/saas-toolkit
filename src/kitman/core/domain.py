@@ -1,23 +1,20 @@
-from collections import OrderedDict
+import datetime
 import enum
+from collections import OrderedDict
 from typing import (
     Any,
     AsyncGenerator,
     Callable,
     Coroutine,
-    Protocol,
-    Generic,
     Generator,
+    Generic,
+    Protocol,
     Self,
 )
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from ordered_set import TypeVar
-from pydantic import BaseModel, Field, validator, constr, create_model, root_validator
-from pydantic.generics import GenericModel
-import datetime
-from uuid import uuid4
 import pycountry
+from ordered_set import TypeVar
 from phonenumbers import (
     NumberParseException,
     PhoneNumberFormat,
@@ -25,10 +22,11 @@ from phonenumbers import (
     format_number,
     is_valid_number,
     number_type,
-    parse as parse_phone_number,
 )
-from pydantic.fields import ModelField, FieldInfo
-
+from phonenumbers import parse as parse_phone_number
+from pydantic import BaseModel, Field, constr, create_model, root_validator, validator
+from pydantic.fields import FieldInfo, ModelField
+from pydantic.generics import GenericModel
 
 # Value objects
 OpenAPIResponseType = dict[int, str, dict[str, Any]]
@@ -102,8 +100,8 @@ class Entity(BaseModel):
                 field_name, field_config = field
                 field_config.set_config(cls.Config)
 
-            new_fields.update({field_name, field_config})
-            new_annotations.update({field_name, field_config.annotation})
+            new_fields.update({field_name: field_config})
+            new_annotations.update({field_name: field_config.annotation})
 
         model = create_model(
             name,
