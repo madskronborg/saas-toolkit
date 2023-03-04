@@ -1,8 +1,8 @@
 import loguru
-from pydantic import BaseModel
-from kitman import Plugin, Kitman
 from loguru import Logger
+from pydantic import BaseModel
 
+from kitman import Kitman, Plugin
 from kitman.kitman import InstallableManager
 
 
@@ -26,7 +26,7 @@ class LoguruPlugin(Plugin[LoguruConf]):
 
         logger = Logger()
 
-        if self.conf.enable:
+        if self.settings.enable:
             logger.enable("kitman")
         else:
             logger.disable("kitman")

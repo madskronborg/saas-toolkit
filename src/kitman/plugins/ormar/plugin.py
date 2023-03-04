@@ -1,11 +1,13 @@
 from typing import Any
+
 from databases import Database
+from ormar import ModelMeta
 from pydantic import BaseModel, PostgresDsn, validator
 from sqlalchemy import MetaData
-from kitman import Plugin, Kitman
+
+from kitman import Kitman, Plugin
 from kitman.kitman import InstallableManager
 from kitman.plugins.loguru import LoguruPlugin
-from ormar import ModelMeta
 
 from .models import BaseQueryset
 
@@ -58,17 +60,17 @@ class OrmarPluginManager(InstallableManager["OrmarPlugin", OrmarConf]):
     def install(self, kitman: Kitman, conf: OrmarConf | None = None) -> None:
         super().install(kitman, conf)
 
-        if self.conf:
-            db_url = self.conf.database.URI
+        if self.settings:
+            db_url = self.settings.database.URI
 
-            metadata = self.conf.metadata
+            metadata = self.settings.metadata
             db = Database(db_url)
 
             self.parent.connection = OrmarConnection(metadata=metadata, database=db)
 
             self.parent.init_db()
-            kitman.fastapi.add_event_handler("startup", self.parent.start_database)
-            kitman.fastapi.add_event_handler("shutdown", self.parent.stop_database)
+            kitman.api.add_event_handler("startup", self.parent.start_database)
+            kitman.api.add_event_handler("shutdown", self.parent.stop_database)
 
 
 class OrmarPlugin(Plugin[OrmarConf]):
@@ -94,7 +96,7 @@ class OrmarPlugin(Plugin[OrmarConf]):
         Add `database` to `app.state`
         """
 
-        self.kitman.fastapi.state.db = self.connection.database
+        self.kitman.api.state.db = self.connection.database
 
     async def start_database(self) -> None:
 
@@ -102,7 +104,7 @@ class OrmarPlugin(Plugin[OrmarConf]):
         logger = logger_plugin.get_logger()
 
         logger.info("Starting database..")
-        database_: Database = self.kitman.fastapi.state.db
+        database_: Database = self.kitman.api.state.db
         if not database_.is_connected:
             await database_.connect()
 
@@ -114,7 +116,7 @@ class OrmarPlugin(Plugin[OrmarConf]):
         logger = logger_plugin.get_logger()
 
         logger.info("Shutting down database..")
-        database_: Database = self.kitman.fastapi.state.db
+        database_: Database = self.kitman.api.state.db
         if database_.is_connected:
             await database_.disconnect()
 

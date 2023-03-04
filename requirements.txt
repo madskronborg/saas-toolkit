@@ -10,6 +10,7 @@ makefun
 deepdiff
 pycountry
 phonenumbers
+stripe
 
 # CLI
 typer[all]

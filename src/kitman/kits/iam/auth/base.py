@@ -1,16 +1,23 @@
-from collections.abc import Coroutine
 import enum
+from collections.abc import Coroutine
 from typing import Generic, Literal, TypeVar
-from fastapi import Depends, Header, Query, Request
+
+from fastapi import Depends, Header, Query, Request, status
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
-from kitman import Plugin, Kitman, InstallableManager, TInstallableConf, TInstallable
+
+from kitman import (
+    InstallableManager,
+    Kitman,
+    Plugin,
+    TInstallable,
+    TInstallableSettings,
+)
 from kitman.core import exceptions
-from fastapi import status
+from kitman.core.domain import Location
 
 from .. import domain
 
-from kitman.core.domain import Location
 
 # Location strategies
 class BaseLocationStrategy:

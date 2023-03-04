@@ -1,9 +1,11 @@
+import datetime
 from abc import ABC, abstractmethod
+from asyncio import gather
 from typing import TYPE_CHECKING
 from uuid import uuid4
-from pydantic import BaseModel, Field, UUID4
-import datetime
-from asyncio import gather
+
+from pydantic import UUID4, BaseModel, Field
+
 from .handlers import BaseHandler
 
 if TYPE_CHECKING:
@@ -17,7 +19,7 @@ class DomainEvent(BaseModel):
 
 class EventHandler(BaseHandler[DomainEvent]):
 
-    handles: set[DomainEvent] = set()
+    handles: set[type[DomainEvent]] = set()
 
 
 # Emitters
@@ -44,4 +46,4 @@ class ProcessEmitter(BaseEmitter):
         if not event_handlers:
             return
 
-        await gather([handler(event) for handler in event_handlers])
+        await gather([await handler.handle(event) for handler in event_handlers])

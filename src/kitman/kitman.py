@@ -1,22 +1,23 @@
 from __future__ import annotations
-from typing import Generic, TypeVar, overload
+
+from typing import Generic, Protocol, TypeVar, overload
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, BaseSettings
 from pydantic.generics import GenericModel
-from fastapi.responses import JSONResponse
 
 from kitman import exceptions
 from kitman.core.commands import Command, CommandHandler, TCommandHandler
-
 from kitman.core.events import BaseEmitter, DomainEvent, EventHandler
 from kitman.core.queries import Query, QueryHandler, TQueryHandler
 
 from .conf import Settings
 
-
 TKitmanSettings = TypeVar("TKitmanSettings", bound=Settings)
-TInstallableConf = TypeVar("TInstallableConf", bound=BaseSettings | BaseModel)
+TInstallableSettings = TypeVar(
+    "TInstallableConf", bound=BaseSettings | BaseModel | None
+)
 TInstallable = TypeVar("TInstallable", bound="Installable")
 
 
@@ -24,10 +25,10 @@ class InstallableError(Exception):
     pass
 
 
-class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
+class InstallableManager(GenericModel, Generic[TInstallable, TInstallableSettings]):
 
-    default_conf: TInstallableConf | None = None
-    require_conf: bool = False
+    default_settings: TInstallableSettings | None = None
+    require_settings: bool = False
 
     parent: TInstallable | Installable | None = None
 
@@ -44,13 +45,15 @@ class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
         return self.parent.kitman
 
     @property
-    def conf(self) -> TInstallableConf:
+    def settings(self) -> TInstallableSettings:
 
-        return self.parent.conf
+        return self.parent.settings
 
-    def install(self, kitman: Kitman, conf: TInstallableConf | None = None) -> None:
+    def install(
+        self, kitman: Kitman, settings: TInstallableSettings | None = None
+    ) -> None:
         self.parent.kitman = kitman
-        self.parent.conf = conf or self.default_conf
+        self.parent.settings = settings or self.default_settings
 
     def fail(self, message: str, *args, **kwargs) -> None:
         """
@@ -88,10 +91,10 @@ class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
 
             return False
 
-        if self.require_conf:
+        if self.require_settings:
 
-            if not self.parent.conf:
-                self.fail(f"No config provided but config is required")
+            if not self.parent.settings:
+                self.fail(f"Settings are required")
 
         if self.required_plugins:
 
@@ -141,11 +144,11 @@ class InstallableManager(GenericModel, Generic[TInstallable, TInstallableConf]):
 TInstallableManager = TypeVar("TInstallableManager", bound=InstallableManager)
 
 
-class Installable(Generic[TInstallableConf]):
+class Installable(Generic[TInstallableSettings]):
     name: str
     description: str
     kitman: Kitman | None = None
-    conf: TInstallableConf | None = None
+    settings: TInstallableSettings | None = None
     manager: InstallableManager = InstallableManager()
 
     def __init__(self, *args, **kwargs):
@@ -155,24 +158,26 @@ class Installable(Generic[TInstallableConf]):
         self.manager.parent = self
 
 
-class Plugin(Installable[TInstallableConf]):
+class Plugin(Installable[TInstallableSettings]):
     pass
 
 
-class Kit(Plugin[TInstallableConf]):
+class Kit(Plugin[TInstallableSettings]):
     pass
 
 
 class Kitman(Plugin, Generic[TKitmanSettings]):
 
-    fastapi: FastAPI
+    api: FastAPI
     settings: Settings
     emitter: BaseEmitter | None = None
     kits: dict[type[Kit], Kit] = {}
 
-    commands: dict[type[CommandHandler], CommandHandler] = {}
-    queries: dict[type[QueryHandler], QueryHandler] = {}
-    events: dict[type[DomainEvent], set[EventHandler]] = {}
+    provides: dict[
+        type[CommandHandler] | type[QueryHandler] | Protocol,
+        CommandHandler | QueryHandler,
+    ] = {}
+    events: dict[type[DomainEvent] | Protocol, set[EventHandler]] = {}
 
     def __init__(self, settings: Settings, emitter: BaseEmitter | None = None):
 
@@ -185,20 +190,18 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
     def use(
         self,
         installable: FastAPI | Plugin | Kit,
-        conf: BaseSettings | BaseModel | None = None,
+        settings: BaseSettings | BaseModel | None = None,
     ) -> None:
 
         if isinstance(installable, FastAPI):
-            self.fastapi = installable
-            self.fastapi.title = self.settings.project_name
-            self.fastapi.add_exception_handler(
-                exceptions.HTTPError, self.exception_handler
-            )
+            self.api = installable
+            self.api.title = self.settings.project_name
+            self.api.add_exception_handler(exceptions.HTTPError, self.exception_handler)
             return
 
         installable_type = type(installable)
 
-        installable.manager.install(self, conf)
+        installable.manager.install(self, settings)
 
         installable.manager.check()
 
@@ -221,13 +224,31 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
 
             self.events[event_type].add(handler)
 
-    def command(self, handler: CommandHandler):
+    def command(self, handler: CommandHandler, token: Protocol | None = None):
         handler.kitman = self
-        self.commands[type(handler)] = handler
+        self.provides[type(handler)] = handler
 
-    def query(self, handler: QueryHandler):
+        if token:
+            self.provides[token] = handler
+
+    def query(self, handler: QueryHandler, token: Protocol | None = None):
         handler.kitman = self
-        self.queries[type(handler)] = handler
+        self.provides[type(handler)] = handler
+
+        if token:
+            self.provides[token] = handler
+
+    def provide(
+        self, handler: CommandHandler | QueryHandler, token: Protocol | None = None
+    ):
+
+        handler.kitman = self
+
+        if isinstance(handler, CommandHandler):
+            self.command(handler, token)
+
+        if isinstance(handler, QueryHandler):
+            self.query(handler, token)
 
     @overload
     def inject(self, token: type[TQueryHandler]) -> TQueryHandler:
@@ -237,20 +258,12 @@ class Kitman(Plugin, Generic[TKitmanSettings]):
     def inject(self, token: type[TCommandHandler]) -> TCommandHandler:
         ...
 
-    def inject(self, token: type[TQueryHandler] | type[TCommandHandler]):
+    def inject(self, token: type[TQueryHandler] | type[TCommandHandler] | Protocol):
 
-        handler = None
-
-        if issubclass(token, QueryHandler):
-
-            handler = self.queries[token]
-
-        if issubclass(token, CommandHandler):
-
-            handler = self.commands[token]
+        handler = self.provides.get(token, None)
 
         if not handler:
-            raise Exception("No injectable found for token:", token)
+            raise ValueError("Kitman does not provide:", token)
 
         return handler
 

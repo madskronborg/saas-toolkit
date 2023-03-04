@@ -1,10 +1,9 @@
 from .kitman import (
-    Plugin,
-    Plugin,
-    Kitman,
     InstallableError,
     InstallableManager,
+    Kitman,
+    Plugin,
     TInstallable,
-    TInstallableConf,
     TInstallableManager,
+    TInstallableSettings,
 )

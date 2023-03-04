@@ -1,7 +1,8 @@
-from pydantic import AnyHttpUrl, BaseModel, validator
-from kitman import Plugin, Kitman, InstallableManager
-from kitman.core.converters import convert_value_to_list
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import AnyHttpUrl, BaseModel, validator
+
+from kitman import InstallableManager, Kitman, Plugin
+from kitman.core.converters import convert_value_to_list
 
 
 class CorsConf(BaseModel):
@@ -19,13 +20,13 @@ class CorsPluginManager(InstallableManager["CorsPlugin", CorsConf]):
     def install(self, kitman: Kitman, conf: CorsConf | None = None) -> None:
         super().install(kitman, conf)
 
-        if self.conf:
-            kitman.fastapi.add_middleware(
+        if self.settings:
+            kitman.api.add_middleware(
                 CORSMiddleware,
-                allow_origins=[str(origin) for origin in self.conf.ORIGINS],
-                allow_credentials=self.conf.ALLOW_CREDENTIALS,
-                allow_methods=self.conf.ALLOW_METHODS,
-                allow_headers=self.conf.ALLOW_HEADERS,
+                allow_origins=[str(origin) for origin in self.settings.ORIGINS],
+                allow_credentials=self.settings.ALLOW_CREDENTIALS,
+                allow_methods=self.settings.ALLOW_METHODS,
+                allow_headers=self.settings.ALLOW_HEADERS,
             )
 
 

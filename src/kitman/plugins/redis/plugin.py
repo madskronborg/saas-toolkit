@@ -1,10 +1,13 @@
 from typing import Any
+
 from typing_extensions import Self
-from kitman import Plugin, Kitman
+
+from kitman import Kitman, Plugin
+from kitman.core import dynamic
 from kitman.kitman import InstallableManager
 from kitman.plugins.ormar.models import BaseModel
+
 from .client import Redis
-from kitman.core import dynamic
 
 
 class RedisPluginConf(BaseModel):
@@ -41,7 +44,7 @@ class RedisPluginManager(InstallableManager["RedisPlugin", RedisPluginConf]):
     def check(self, raise_exception: bool = True) -> bool:
         valid = super().check(raise_exception)
 
-        if not self.parent.conf:
+        if not self.parent.settings:
 
             if raise_exception:
                 self.fail("Config for redis plugin is not defined")
@@ -58,7 +61,7 @@ class RedisPlugin(Plugin[RedisPluginConf]):
 
     def _get_redis_options(self, override_conf: RedisPluginConf | None):
 
-        conf = override_conf or self.conf
+        conf = override_conf or self.settings
 
         return conf.get_redis_options()
 

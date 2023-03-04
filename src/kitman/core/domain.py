@@ -13,7 +13,7 @@ from typing import (
 from uuid import UUID
 
 from ordered_set import TypeVar
-from pydantic import BaseModel, Field, validator, constr, create_model
+from pydantic import BaseModel, Field, validator, constr, create_model, root_validator
 from pydantic.generics import GenericModel
 import datetime
 from uuid import uuid4
@@ -58,6 +58,16 @@ class Location(str, enum.Enum):
     cookie = "cookie"
 
 
+# Schemas
+class Schema(BaseModel):
+    class Config:
+        orm_mode = True
+
+
+class SchemaOut(Schema):
+    id: UUID
+
+
 # Entities
 class Entity(BaseModel):
 
@@ -69,6 +79,7 @@ class Entity(BaseModel):
         name: str,
         fields: list[str | tuple[str, ModelField]],
         validators: dict[str, callable] = None,
+        __base__: type["Schema"] = Schema,
     ):
 
         new_fields: OrderedDict[str, ModelField] = OrderedDict()
@@ -96,7 +107,7 @@ class Entity(BaseModel):
 
         model = create_model(
             name,
-            __base__=Schema,
+            __base__=__base__,
             __config__=cls.Config,
             __validators__=validators,
         )
@@ -115,12 +126,6 @@ class TimestampedEntity(Entity):
     def set_updated(cls, value: datetime.datetime | None, **kwargs):
 
         return datetime.datetime.utcnow()
-
-
-# Schemas
-class Schema(BaseModel):
-    class Config:
-        orm_mode = True
 
 
 # Pages
