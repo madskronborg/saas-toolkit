@@ -77,6 +77,7 @@ class Entity(BaseModel):
         name: str,
         fields: list[str | tuple[str, ModelField]],
         validators: dict[str, callable] = None,
+        partial: bool = False,
         __base__: type["Schema"] = Schema,
     ):
 
@@ -99,6 +100,10 @@ class Entity(BaseModel):
             if isinstance(field, tuple):
                 field_name, field_config = field
                 field_config.set_config(cls.Config)
+
+            if partial:
+                field_config.required = False
+                field_config.annotation = field_config.annotation | None
 
             new_fields.update({field_name: field_config})
             new_annotations.update({field_name: field_config.annotation})
