@@ -10,11 +10,11 @@ from typing import (
     Generic,
     Protocol,
     Self,
+    TypeVar,
 )
 from uuid import UUID, uuid4
 
 import pycountry
-from ordered_set import TypeVar
 from phonenumbers import (
     NumberParseException,
     PhoneNumberFormat,
@@ -29,7 +29,7 @@ from pydantic.fields import FieldInfo, ModelField
 from pydantic.generics import GenericModel
 
 # Value objects
-OpenAPIResponseType = dict[int, str, dict[str, Any]]
+OpenAPIResponseType = dict[int | str, dict[str, Any]]
 
 RETURN_TYPE = TypeVar("RETURN_TYPE")
 

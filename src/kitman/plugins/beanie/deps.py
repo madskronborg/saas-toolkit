@@ -1,15 +1,19 @@
-from typing import Awaitable, Callable, Generic, TypedDict
-from .domain import TDocument, FindMany
-from fastapi import Query
 import math
+from typing import Awaitable, Callable, Generic, TypedDict
+
 from beanie.operators import NotIn
+from fastapi import Query
+
+from .domain import FindMany, TDocument
 
 
 class PaginatorResult(TypedDict, Generic[TDocument]):
     page: int
     size: int
     total: int
-    items: list[TDocument]
+    items: list[dict]
+    prev_page: int | None
+    next_page: int | None
 
 
 Paginator = Callable[
@@ -56,7 +60,7 @@ def get_pagination(page: int = Query(1, ge=1), size: int = Query(100, le=100, ge
         if page > 1:
             prev_page = page - 1
 
-        items: list[TDocument] = [*extra_items] if extra_items else []
+        items: list[dict] = [item.dict() for item in extra_items] if extra_items else []
 
         # print("Query size:", query_size, "page:", page, "Query Count:", await query.count())
 
