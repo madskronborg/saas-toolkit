@@ -19,11 +19,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set environment
+    - name: Replace environment variables
       env:
         PACKAGE_VERSION: ${{ github.event.release.tag_name }}
-      run: echo "Publishing package with version $PACKAGE_VERSION"
-    - name: Replace environment variables
       run: envsubst < setup.cfg
     - name: Set up Python
       uses: actions/setup-python@v2
