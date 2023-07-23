@@ -4,7 +4,6 @@ from typing import Generic, Literal, TypeVar
 
 from fastapi import Depends, Header, Query, Request, status
 from pydantic import BaseModel
-from pydantic.generics import GenericModel
 
 from kitman import (
     InstallableManager,
@@ -61,7 +60,7 @@ class CookieLocationStrategy(BaseLocationStrategy):
 # End location strategies
 
 
-class BaseAuthenticationConf(GenericModel, Generic[domain.TUser]):
+class BaseAuthenticationConf(BaseModel, Generic[domain.TUser]):
 
     get_user: Coroutine[list[str | int, bool, bool], None, domain.TUser | None]
     location: BaseLocationStrategy = HeaderLocationStrategy(key="Authentication")

@@ -24,9 +24,8 @@ from phonenumbers import (
     number_type,
 )
 from phonenumbers import parse as parse_phone_number
-from pydantic import BaseModel, Field, constr, create_model, root_validator, validator
+from pydantic import ConfigDict, BaseModel, Field, constr, create_model, root_validator, validator
 from pydantic.fields import FieldInfo, ModelField
-from pydantic.generics import GenericModel
 
 # Value objects
 OpenAPIResponseType = dict[int | str, dict[str, Any]]
@@ -58,8 +57,7 @@ class Location(str, enum.Enum):
 
 # Schemas
 class Schema(BaseModel):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SchemaOut(Schema):
@@ -124,6 +122,8 @@ class TimestampedEntity(Entity):
     created: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     updated: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("updated", always=True)
     def set_updated(cls, value: datetime.datetime | None, **kwargs):
 
@@ -134,7 +134,7 @@ class TimestampedEntity(Entity):
 TPageItem = TypeVar("TPageItem", bound=Schema)
 
 
-class Page(GenericModel, Generic[TPageItem]):
+class Page(BaseModel, Generic[TPageItem]):
 
     page: int = 1
     size: int = 100

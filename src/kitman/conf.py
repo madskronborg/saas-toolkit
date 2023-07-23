@@ -1,11 +1,10 @@
 from pathlib import Path
-from pydantic import BaseModel, SecretStr
+
+from pydantic import BaseModel, ConfigDict, SecretStr
 
 
 class BaseSettings(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-        validate_assignment = True
+    model_config = ConfigDict(arbitrary_types_allowed=True, validate_assignment=True)
 
 
 class Settings(BaseSettings):

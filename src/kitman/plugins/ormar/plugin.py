@@ -15,11 +15,13 @@ from .models import BaseQueryset
 class PostgresConf(BaseModel):
 
     SERVER: str | None = None
-    USER: str | None
+    USER: str | None = None
     PASSWORD: str
     DB: str
     URI: PostgresDsn | None = None
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("URI", pre=True)
     def assemble_db_connection(cls, v: str | None, values: dict[str, Any]) -> Any:
         if isinstance(v, str):

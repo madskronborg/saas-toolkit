@@ -4,8 +4,7 @@ from typing import Generic, Protocol, TypeVar, overload
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, BaseSettings
-from pydantic.generics import GenericModel
+from pydantic import BaseModel
 
 from kitman import exceptions
 from kitman.core.commands import Command, CommandHandler, TCommandHandler
@@ -13,6 +12,7 @@ from kitman.core.events import BaseEmitter, DomainEvent, EventHandler
 from kitman.core.queries import Query, QueryHandler, TQueryHandler
 
 from .conf import Settings
+from pydantic_settings import BaseSettings
 
 TKitmanSettings = TypeVar("TKitmanSettings", bound=Settings)
 TInstallableSettings = TypeVar(
@@ -25,7 +25,7 @@ class InstallableError(Exception):
     pass
 
 
-class InstallableManager(GenericModel, Generic[TInstallable, TInstallableSettings]):
+class InstallableManager(BaseModel, Generic[TInstallable, TInstallableSettings]):
 
     default_settings: TInstallableSettings | None = None
     require_settings: bool = False

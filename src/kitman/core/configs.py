@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING, ForwardRef, Generic, Type, TypeVar
 from fastapi import FastAPI
 from pydantic import BaseModel
 from .services import BaseService
-from pydantic.generics import GenericModel
 
 if TYPE_CHECKING:
     from kitman.conf import Settings
@@ -17,6 +16,8 @@ class BaseConfig:
 
 
 class ModelConfig(BaseModel):
+    # TODO[pydantic]: The `Config` class inherits from another class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     class Config(BaseConfig):
         pass
 
@@ -25,23 +26,31 @@ class ModelConfig(BaseModel):
 
 
 class ServiceConfig(BaseModel):
+    # TODO[pydantic]: The `Config` class inherits from another class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     class Config(BaseConfig):
         pass
 
 
 class DependencyConfig(BaseModel):
+    # TODO[pydantic]: The `Config` class inherits from another class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     class Config(BaseConfig):
         pass
 
 
 class SimpleConfig(BaseModel):
+    # TODO[pydantic]: The `Config` class inherits from another class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     class Config(BaseConfig):
         pass
 
 
 class AppConfig(
-    GenericModel, Generic[TModelsConfig, TServicesConfig, TDependenciesConfig]
+    BaseModel, Generic[TModelsConfig, TServicesConfig, TDependenciesConfig]
 ):
+    # TODO[pydantic]: The `Config` class inherits from another class, please create the `model_config` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-config for more information.
     class Config(BaseConfig):
         pass
 

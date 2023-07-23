@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import Generic, Type, overload
 from typing_extensions import Self
-from pydantic import parse_obj_as
+from pydantic import ConfigDict, parse_obj_as
 
 from collections import OrderedDict
 
@@ -20,9 +20,7 @@ class BaseTemplateBuilder(
         domain.TTemplateBuild,
     ]
 ):
-    class Config:
-        template_structure_model: Type[domain.TTemplateStructure]
-        template_build_model: Type[domain.TTemplateBuild]
+    model_config = ConfigDict()
 
     _group: domain.TTemplateGroup | None = None
     _user_templates: dict[str, domain.TTemplate] = {}

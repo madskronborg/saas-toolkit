@@ -1,6 +1,7 @@
 from __future__ import annotations
 from . import domain
 from . import generics
+from pydantic import ConfigDict
 
 
 class TemplateVariable(domain.BaseTemplateVariable):
@@ -41,6 +42,4 @@ class TemplateBuilder(
         TemplateBuild,
     ]
 ):
-    class Config:
-        template_structure_model = TemplateStructure
-        template_build_model = TemplateBuild
+    model_config = ConfigDict(template_structure_model=TemplateStructure, template_build_model=TemplateBuild)

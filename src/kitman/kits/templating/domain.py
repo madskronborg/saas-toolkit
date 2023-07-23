@@ -1,7 +1,6 @@
 from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field, root_validator, validator
-from pydantic.generics import GenericModel
 
 from kitman.core import dynamic
 
@@ -27,6 +26,8 @@ class BaseTemplateVariable(BaseModel):
     template: str | int | None = None
     group: str | int | None = None
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("depends_on", pre=True, always=True)
     def validate_depends_on(cls, v: set[str] | None, values: dict, **kwargs):
 
@@ -46,7 +47,7 @@ class BaseTemplateVariable(BaseModel):
         return depends_on
 
 
-class BaseTemplateItem(GenericModel, Generic[TTemplate]):
+class BaseTemplateItem(BaseModel, Generic[TTemplate]):
 
     name: str | int | None = None
     description: str | None = None
@@ -54,6 +55,8 @@ class BaseTemplateItem(GenericModel, Generic[TTemplate]):
     depends_on: set[str] | None = None
     template: str | int | None = None
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("depends_on", pre=True, always=True)
     def validate_depends_on(cls, v: set[str] | None, values: dict, **kwargs):
 
@@ -81,7 +84,7 @@ class BaseTemplateItem(GenericModel, Generic[TTemplate]):
         return depends_on
 
 
-class BaseTemplate(GenericModel, Generic[TTemplate, TTemplateItem, TTemplateVariable]):
+class BaseTemplate(BaseModel, Generic[TTemplate, TTemplateItem, TTemplateVariable]):
 
     name: str | int
     description: str | None = None
@@ -98,6 +101,8 @@ class BaseTemplate(GenericModel, Generic[TTemplate, TTemplateItem, TTemplateVari
     group: str | int | None = None
     extends: TTemplate | None = None
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("variables", "items", each_item=True)
     def add_template_to_variables_and_items(
         cls, v: TTemplateItem | TTemplateVariable, values: dict
@@ -111,7 +116,7 @@ class BaseTemplate(GenericModel, Generic[TTemplate, TTemplateItem, TTemplateVari
 
 
 class BaseTemplateGroup(
-    GenericModel, Generic[TTemplateGroup, TTemplate, TTemplateVariable]
+    BaseModel, Generic[TTemplateGroup, TTemplate, TTemplateVariable]
 ):
 
     name: str | int
@@ -123,6 +128,8 @@ class BaseTemplateGroup(
     # Internal context variables
     extends: TTemplateGroup | None = None
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("templates", each_item=True)
     def add_group_to_templates(cls, v: TTemplate, values: dict):
 
@@ -134,7 +141,7 @@ class BaseTemplateGroup(
 
 
 class BaseTemplateStructure(
-    GenericModel, Generic[TTemplate, TTemplateItem, TTemplateVariable]
+    BaseModel, Generic[TTemplate, TTemplateItem, TTemplateVariable]
 ):
     """
     TemplateStructure
