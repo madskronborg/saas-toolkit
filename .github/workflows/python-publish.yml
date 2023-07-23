@@ -18,6 +18,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Dump GitHub context
+      env:
+        PACKAGE_VERSION: ${{ github.event.release.tag_name }}
+      run: echo "Publishing package with version $PACKAGE_VERSION"
+    - shell: bash
+      run: envsubst < setup.cfg
     - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v2
