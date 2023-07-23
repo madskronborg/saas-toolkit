@@ -31,7 +31,8 @@ jobs:
       env:
         PACKAGE_VERSION: ${{ github.event.release.tag_name }}
       run: |
-        envsubst < setup.cfg 
+        envsubst < setup.cfg > setup_final.cfg
+        cp -f setup_final.cfg setup.cfg
         python -m build
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
